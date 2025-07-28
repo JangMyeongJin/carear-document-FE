@@ -1,0 +1,176 @@
+.experience {
+  padding: 100px 0;
+  background: white;
+}
+
+.experience-timeline {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 0;
+}
+
+.experience-timeline::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, #3498db, #9b59b6);
+  transform: translateX(-50%);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 3rem;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  width: 20px;
+  height: 20px;
+  background: #3498db;
+  border: 4px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px #3498db;
+  z-index: 1;
+}
+
+.timeline-item.left::before {
+  left: calc(50% - 10px);
+}
+
+.timeline-item.right::before {
+  left: calc(50% - 10px);
+}
+
+.timeline-content {
+  background: white;
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+  position: relative;
+  width: calc(50% - 50px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.timeline-content:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+}
+
+.timeline-item.left .timeline-content {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.timeline-item.right .timeline-content {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.timeline-header h3 {
+  font-size: 1.3rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.timeline-header h4 {
+  font-size: 1.1rem;
+  color: #3498db;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.period {
+  display: inline-block;
+  background: #ecf0f1;
+  color: #7f8c8d;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.description {
+  color: #34495e;
+  line-height: 1.6;
+  margin: 1rem 0;
+}
+
+.achievements h5,
+.technologies h5 {
+  font-size: 1rem;
+  color: #2c3e50;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+}
+
+.achievements ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+
+.achievements li {
+  color: #7f8c8d;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.achievements li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.tech-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tech-tag {
+  background: #3498db;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .experience {
+    padding: 60px 0;
+  }
+
+  .experience-timeline::before {
+    left: 30px;
+  }
+
+  .timeline-item::before {
+    left: 20px !important;
+  }
+
+  .timeline-content {
+    width: calc(100% - 60px);
+    margin-left: 60px !important;
+    margin-right: 0 !important;
+  }
+
+  .timeline-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .timeline-header h4 {
+    font-size: 1rem;
+  }
+}
