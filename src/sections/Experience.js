@@ -5,30 +5,16 @@ const Experience = () => {
   const experiences = [
     {
       id: 1,
-      company: "대형 검색 플랫폼",
-      position: "시니어 검색엔진 엔지니어",
-      period: "2022 - 현재",
-      description:
-        "대용량 검색 시스템의 설계, 개발, 운영을 담당하며 검색 성능 최적화와 사용자 경험 향상에 기여했습니다.",
-      achievements: [
-        "일일 100만 건 이상의 검색 요청 처리 시스템 구축",
-        "검색 응답 시간 50% 단축 (평균 200ms → 100ms)",
-        "검색 정확도 향상을 위한 랭킹 알고리즘 개선",
-      ],
-      technologies: ["Elasticsearch", "Java", "Python", "Kafka", "Redis"],
-    },
-    {
-      id: 2,
-      company: "검색 기술 스타트업",
+      company: "(주)클러쉬 (Clush)",
       position: "검색 개발자",
-      period: "2020 - 2022",
+      period: "2025.05 - 현재",
       description: "자체 검색엔진 개발 및 검색 API 서비스 구축을 담당했습니다.",
       achievements: [
         "자체 검색엔진 개발로 검색 정확도 30% 향상",
         "검색 API 서비스 구축 및 고객사 50개 이상 연동",
         "실시간 검색어 분석 및 트렌드 추적 시스템 개발",
       ],
-      technologies: ["Solr", "Java", "Spring", "MySQL", "Docker"],
+      technologies: ["OpenSearch", "Java", "Spring", "PostgreSQL", "AirFlow"],
     },
     {
       id: 3,

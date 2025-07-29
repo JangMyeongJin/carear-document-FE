@@ -32,9 +32,6 @@ const Header = () => {
         <nav className={`nav ${isMobileMenuOpen ? "mobile-open" : ""}`}>
           <ul className="nav-list">
             <li>
-              <button onClick={() => scrollToSection("about")}>About</button>
-            </li>
-            <li>
               <button onClick={() => scrollToSection("experience")}>
                 Experience
               </button>
