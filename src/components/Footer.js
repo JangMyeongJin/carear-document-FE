@@ -19,9 +19,6 @@ const Footer = () => {
             <h4>빠른 링크</h4>
             <ul>
               <li>
-                <a href="#about">About</a>
-              </li>
-              <li>
                 <a href="#experience">Experience</a>
               </li>
               <li>

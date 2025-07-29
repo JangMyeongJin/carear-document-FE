@@ -145,10 +145,6 @@ const Projects = () => {
         <div className="projects-grid">
           {filteredProjects.map((project) => (
             <div key={project.id} className="project-card">
-              <div className="project-image">
-                <div className="project-icon">{project.image}</div>
-              </div>
-
               <div className="project-content">
                 <h3>{project.title}</h3>
                 <p>{project.description}</p>
@@ -168,15 +164,6 @@ const Projects = () => {
                       {tech}
                     </span>
                   ))}
-                </div>
-
-                <div className="project-links">
-                  <a href={project.github} className="project-link github">
-                    <span>GitHub</span>
-                  </a>
-                  <a href={project.live} className="project-link live">
-                    <span>Live Demo</span>
-                  </a>
                 </div>
               </div>
             </div>
