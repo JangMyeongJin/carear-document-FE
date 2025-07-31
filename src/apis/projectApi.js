@@ -16,7 +16,7 @@ export const searchProjects = async (params) => {
 // 프로젝트 추가 API
 export const createProject = async (projectData) => {
   try {
-    const response = await api.post('/projects', projectData);
+    const response = await api.put('/put/project', projectData);
     return response.data;
   } catch (error) {
     console.error('프로젝트 추가 에러:', error);
@@ -38,7 +38,11 @@ export const updateProject = async (projectId, projectData) => {
 // 프로젝트 삭제 API
 export const deleteProject = async (projectId) => {
   try {
-    const response = await api.delete(`/projects/${projectId}`);
+    const params = {  
+      id: projectId
+    }
+    
+    const response = await api.delete('/delete/project', { params });
     return response.data;
   } catch (error) {
     console.error('프로젝트 삭제 에러:', error);

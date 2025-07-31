@@ -9,10 +9,11 @@ const AdminPage = () => {
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
-    description: "",
-    period: "",
+    startDate: "",
+    endDate: "",
     role: "",
-    technologies: "",
+    stack: "",
+    body: "",
     features: ""
   });
 
@@ -26,7 +27,55 @@ const AdminPage = () => {
 
   // 초기 프로젝트 데이터 로드
   useEffect(() => {
+    const abortController = new AbortController();
+    
+    const loadProjects = async () => {
+      try {
+        const params = {
+          query: '',
+          startDate: '',
+          endDate: ''
+        };
+
+        const data = await searchProjects(params, abortController.signal);
+        setProjects(data.data.result);
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          return; // 중단된 요청은 무시
+        }
+        console.error('프로젝트 로드 실패:', error);
+        // 에러 시 기본 데이터 사용
+        const initialProjects = [
+          {
+            id: 1,
+            title: "대용량 검색 플랫폼",
+            body: "일일 100만 건 이상의 검색 요청을 처리하는 대용량 검색 플랫폼입니다. Elasticsearch 기반으로 구축되어 높은 성능과 확장성을 제공합니다.",
+            startDate: "20230301",  // YYYYMMDD 형식
+            endDate: "20231231",    // YYYYMMDD 형식
+            role: "백엔드 개발",
+            stack: ["Elasticsearch", "Java", "Kafka", "Redis", "Docker"],
+            features: ["대용량 검색 처리", "실시간 인덱싱", "검색 성능 최적화", "모니터링 대시보드"]
+          },
+          {
+            id: 2,
+            title: "자체 검색엔진 개발",
+            body: "Lucene 기반의 자체 검색엔진을 개발하여 특정 도메인에 최적화된 검색 서비스를 제공합니다.",
+            startDate: "20220601",  // YYYYMMDD 형식
+            endDate: "20230228",    // YYYYMMDD 형식
+            role: "검색엔진 개발",
+            stack: ["Lucene", "Java", "Spring", "MySQL", "Maven"],
+            features: ["커스텀 랭킹 알고리즘", "도메인 특화 검색", "검색 품질 평가", "성능 튜닝"]
+          }
+        ];
+        setProjects(initialProjects);
+      }
+    };
+
     loadProjects();
+
+    return () => {
+      abortController.abort(); // 컴포넌트 언마운트 시 요청 중단
+    };
   }, []);
 
   // 프로젝트 목록 로드
@@ -47,19 +96,21 @@ const AdminPage = () => {
         {
           id: 1,
           title: "대용량 검색 플랫폼",
-          description: "일일 100만 건 이상의 검색 요청을 처리하는 대용량 검색 플랫폼입니다. Elasticsearch 기반으로 구축되어 높은 성능과 확장성을 제공합니다.",
-          period: "2023.03 - 2023.12",
+          body: "일일 100만 건 이상의 검색 요청을 처리하는 대용량 검색 플랫폼입니다. Elasticsearch 기반으로 구축되어 높은 성능과 확장성을 제공합니다.",
+          startDate: "20230301",  // YYYYMMDD 형식
+          endDate: "20231231",    // YYYYMMDD 형식
           role: "백엔드 개발",
-          stack: "Elasticsearch Java Kafka Redis Docker",
+          stack: ["Elasticsearch", "Java", "Kafka", "Redis", "Docker"],
           features: ["대용량 검색 처리", "실시간 인덱싱", "검색 성능 최적화", "모니터링 대시보드"]
         },
         {
           id: 2,
           title: "자체 검색엔진 개발",
-          description: "Lucene 기반의 자체 검색엔진을 개발하여 특정 도메인에 최적화된 검색 서비스를 제공합니다.",
-          period: "2022.06 - 2023.02",
+          body: "Lucene 기반의 자체 검색엔진을 개발하여 특정 도메인에 최적화된 검색 서비스를 제공합니다.",
+          startDate: "20220601",  // YYYYMMDD 형식
+          endDate: "20230228",    // YYYYMMDD 형식
           role: "검색엔진 개발",
-          stack: "Lucene Java Spring MySQL Maven",
+          stack: ["Lucene", "Java", "Spring", "MySQL", "Maven"],
           features: ["커스텀 랭킹 알고리즘", "도메인 특화 검색", "검색 품질 평가", "성능 튜닝"]
         }
       ];
@@ -100,37 +151,29 @@ const AdminPage = () => {
     
     const projectData = {
       title: formData.title,
-      description: formData.description,
-      period: formData.period,
+      startDate: formData.startDate.split('-').join(''),
+      endDate: formData.endDate.split('-').join(''),
       role: formData.role,
-      technologies: formData.technologies.split(',').map(tech => tech.trim()),
-      features: formData.features.split(',').map(feature => feature.trim())
+      stack: formData.stack,
+      body: formData.body,
+      features: formData.features
     };
 
     try {
-      if (editingProject) {
-        // 프로젝트 수정
-        await updateProject(editingProject.id, projectData);
-        setProjects(prev => 
-          prev.map(project => 
-            project.id === editingProject.id ? { ...project, ...projectData } : project
-          )
-        );
-        setEditingProject(null);
-      } else {
+      console.log('projectData : ', projectData);
         // 새 프로젝트 추가
         const newProject = await createProject(projectData);
         setProjects(prev => [...prev, newProject]);
         setIsAddingProject(false);
-      }
 
       // 폼 초기화
       setFormData({
         title: "",
-        description: "",
-        period: "",
+        startDate: "",
+        endDate: "",
         role: "",
-        technologies: "",
+        stack: "",
+        body: "",
         features: ""
       });
     } catch (error) {
@@ -143,11 +186,12 @@ const AdminPage = () => {
     setEditingProject(project);
     setFormData({
       title: project.title,
-      description: project.description,
-      period: project.period,
+      startDate: project.startDate || '',
+      endDate: project.endDate || '',
       role: project.role,
-      technologies: project.technologies.join(', '),
-      features: project.features.join(', ')
+      stack: Array.isArray(project.stack) ? project.stack.join(' ') : project.stack,
+      body: Array.isArray(project.body) ? project.body.join(' | ') : project.body,
+      features: Array.isArray(project.features) ? project.features.join(' | ') : project.features  // 파이프라인으로 구분
     });
   };
 
@@ -168,12 +212,45 @@ const AdminPage = () => {
     setIsAddingProject(false);
     setFormData({
       title: "",
-      description: "",
-      period: "",
+      startDate: "",
+      endDate: "",
       role: "",
-      technologies: "",
+      stack: "",
+      body: "",
       features: ""
     });
+  };
+
+  // period를 startDate와 endDate로 변환하는 함수
+  const formatPeriod = (startDate, endDate) => {
+    
+    if (!startDate || !endDate) return '';
+    
+    const formatDate = (dateString) => {
+      // YYYYMMDD 형식 처리
+      if (typeof dateString === 'string' && dateString.length === 8) {
+        const year = dateString.substring(0, 4);
+        const month = dateString.substring(4, 6);
+        const day = dateString.substring(6, 8);
+        return `${year}.${month}.${day}`;
+      }
+      
+      // ISO 형식 처리 (YYYY-MM-DD)
+      if (typeof dateString === 'string' && dateString.includes('-')) {
+        const date = new Date(dateString);
+        return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+      }
+      
+      // Date 객체 처리
+      if (dateString instanceof Date) {
+        return `${dateString.getFullYear()}.${String(dateString.getMonth() + 1).padStart(2, '0')}`;
+      }
+      
+      // 기타 형식은 그대로 반환
+      return dateString;
+    };
+    
+    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
   };
 
   return (
@@ -220,16 +297,25 @@ const AdminPage = () => {
                       <h3>{project.title}</h3>
                     </div>
                     <div className="project-details">
-                      <div className="project-period">{project.period}</div>
+                      <div className="project-period">
+                        {formatPeriod(project.startDate, project.endDate)}
+                      </div>
                       <div className="project-role">{project.role}</div>
                     </div>
-                    <p>{project.description}</p>
+                    <p>{project.body}</p>
                     <div className="project-technologies">
-                      {project.technologies?.map((tech, index) => (
-                        <span key={index} className="tech-tag">
-                          {tech}
-                        </span>
-                      ))}
+                      {Array.isArray(project.stack) ? 
+                        project.stack.map((tech, index) => (
+                          <span key={index} className="tech-tag">
+                            {tech}
+                          </span>
+                        )) : 
+                        project.stack?.split(' ')?.map((tech, index) => (
+                          <span key={index} className="tech-tag">
+                            {tech}
+                          </span>
+                        ))
+                      }
                     </div>
                   </div>
                 ))}
@@ -254,26 +340,28 @@ const AdminPage = () => {
                 />
               </div>
 
-              <div className="form-group">
-                <label>설명:</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>시작일:</label>
+                  <input
+                    type="date"
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
 
-              <div className="form-group">
-                <label>기간:</label>
-                <input
-                  type="text"
-                  name="period"
-                  value={formData.period}
-                  onChange={handleInputChange}
-                  placeholder="2023.03 - 2023.12"
-                  required
-                />
+                <div className="form-group">
+                  <label>종료일:</label>
+                  <input
+                    type="date"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
               </div>
 
               <div className="form-group">
@@ -289,25 +377,37 @@ const AdminPage = () => {
               </div>
 
               <div className="form-group">
-                <label>기술 스택 (쉼표로 구분):</label>
+                <label>기술 스택 (공백으로 구분):</label>
                 <input
                   type="text"
-                  name="technologies"
-                  value={formData.technologies}
+                  name="stack"
+                  value={formData.stack}
                   onChange={handleInputChange}
-                  placeholder="Java, Spring, MySQL"
+                  placeholder="Java Spring MySQL"
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label>주요 기능 (쉼표로 구분):</label>
+                <label>업무내용 (|로 구분)</label>
+                <input
+                  type="text"
+                  name="body"
+                  value={formData.body}
+                  onChange={handleInputChange}
+                  placeholder="업무내용1 | 업무내용2 | 업무내용3"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>성과 (|로 구분)</label>
                 <input
                   type="text"
                   name="features"
                   value={formData.features}
                   onChange={handleInputChange}
-                  placeholder="기능1, 기능2, 기능3"
+                  placeholder="성과1 | 성과2 | 성과3"
                   required
                 />
               </div>
@@ -350,24 +450,51 @@ const AdminPage = () => {
                   <h3>{project.title}</h3>
                 </div>
                 <div className="project-details">
-                  <div className="project-period">{project.period}</div>
+                  <div className="project-period">
+                    {formatPeriod(project.startDate, project.endDate)}
+                  </div>
                   <div className="project-role">{project.role}</div>
                 </div>
-                <p>{project.description}</p>
-                <div className="project-technologies">
-                  {project.stack.split(' ')?.map((tech, index) => (
-                    <span key={index} className="tech-tag">
-                      {tech}
-                    </span>
-                  ))}
+                
+                <div className="project-work-content">
+                  <strong>업무내용</strong>
+                  <ul>
+                    {Array.isArray(project.body) ? 
+                      project.body.map((content, index) => (
+                        <li key={index}>{content}</li>
+                      )) : 
+                      project.body?.split('|')?.map((content, index) => (  // 파이프라인으로 구분
+                        <li key={index}>{content.trim()}</li>
+                      ))
+                    }
+                  </ul>
                 </div>
                 <div className="project-features">
-                  <strong>주요 기능:</strong>
+                  <strong>주요 성과</strong>
                   <ul>
-                    {project.features?.map((feature, index) => (
-                      <li key={index}>{feature}</li>
-                    ))}
+                    {Array.isArray(project.features) ? 
+                      project.features.map((feature, index) => (
+                        <li key={index}>{feature}</li>
+                      )) : 
+                      project.features?.split('|')?.map((feature, index) => (  // 파이프라인으로 구분
+                        <li key={index}>{feature.trim()}</li>
+                      ))
+                    }
                   </ul>
+                </div>
+                <div className="project-technologies">
+                  {Array.isArray(project.stack) ? 
+                    project.stack.map((tech, index) => (
+                      <span key={index} className="tech-tag">
+                        {tech}
+                      </span>
+                    )) : 
+                    project.stack?.split(' ')?.map((tech, index) => (
+                      <span key={index} className="tech-tag">
+                        {tech}
+                      </span>
+                    ))
+                  }
                 </div>
               </div>
             ))}

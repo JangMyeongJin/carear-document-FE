@@ -193,6 +193,39 @@
   font-weight: 500;
 }
 
+.project-work-content {
+  margin-bottom: 1.5rem;
+}
+
+.project-work-content h4 {
+  font-size: 1rem;
+  color: #2c3e50;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+}
+
+.project-work-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.project-work-content li {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+  padding-left: 1.2rem;
+  position: relative;
+}
+
+.project-work-content li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #3498db;
+  font-weight: bold;
+}
+
 @media (max-width: 768px) {
   .projects {
     padding: 60px 0;
