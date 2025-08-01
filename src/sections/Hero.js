@@ -19,7 +19,7 @@ const Hero = () => {
               저는 <span className="highlight">장명진</span>입니다
             </h1>
             <p className="hero-subtitle">
-              주로 ElasticSearch 운영과 검색 API 개발을 통해 사용자에게 정확하고
+              주로 검색엔진 운영과 검색 API 개발을 통해 사용자에게 정확하고
               빠른 검색 경험을 제공해왔습니다. <br />
               사용자가 쉽게 검색 할 수 있게 인기 검색어, 자동완성, 데이터 통계
               API 등 부가적인 API도 개발해왔습니다. <br />

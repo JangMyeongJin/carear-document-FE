@@ -7,6 +7,7 @@ const AdminPage = () => {
   const [editingProject, setEditingProject] = useState(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [formData, setFormData] = useState({
+    id: "",
     title: "",
     startDate: "",
     endDate: "",
@@ -119,16 +120,31 @@ const AdminPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    let projectData;
     
-    const projectData = {
-      title: formData.title,
-      startDate: formData.startDate.split('-').join(''),
-      endDate: formData.endDate.split('-').join(''),
-      role: formData.role,
-      stack: formData.stack,
-      body: formData.body,
-      features: formData.features
-    };
+    if(formData.id === ""){
+      projectData = {
+        title: formData.title,
+        startDate: formData.startDate.split('-').join(''),
+        endDate: formData.endDate.split('-').join(''),
+        role: formData.role,
+        stack: formData.stack,
+        body: formData.body,
+        features: formData.features
+      };
+    }else{
+      projectData = {
+        id: formData.id,
+        title: formData.title,
+        startDate: formData.startDate.split('-').join(''),
+        endDate: formData.endDate.split('-').join(''),
+        role: formData.role,
+        stack: formData.stack,
+        body: formData.body,
+        features: formData.features
+      };
+    }
 
     try {
       console.log('projectData : ', projectData);
