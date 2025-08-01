@@ -3,7 +3,22 @@ import api from './api';
 // 프로젝트 검색 API
 export const searchProjects = async (params) => {
   try {
-    const response = await api.post('/search/query/project', { params });
+    console.log('params : ', params);
+    const response = await api.post('/search/query/project', params);
+    console.log(response.data);
+
+    return response.data;
+  } catch (error) {
+    console.error('프로젝트 검색 에러:', error);
+    throw error;
+  }
+};
+
+// 프로젝트 검색 API
+export const searchAggregationProject = async (params) => {
+  try {
+    console.log('params : ', params);
+    const response = await api.post('/search/aggregation/project', params);
     console.log(response.data);
 
     return response.data;
