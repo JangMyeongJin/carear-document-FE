@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import "./AdminPage.css";
-import { useProjectSearch } from '../apis/useProjectSearch';
 import { searchProjects, createProject, updateProject, deleteProject } from '../apis/projectApi';
 
 const AdminPage = () => {
@@ -16,14 +15,6 @@ const AdminPage = () => {
     body: "",
     features: ""
   });
-
-  // 검색 관련 상태
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-
-  // 프로젝트 검색 훅 사용
-  const { query, setQuery, results, loading: searchLoading, error: searchError, search } = useProjectSearch();
 
   // 초기 프로젝트 데이터 로드
   useEffect(() => {
@@ -115,26 +106,6 @@ const AdminPage = () => {
         }
       ];
       setProjects(initialProjects);
-    }
-  };
-
-  // 프로젝트 검색
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-        console.log('검색 시작 : ',searchQuery);
-      const data = await searchProjects(searchQuery);
-      setSearchResults(data);
-    } catch (error) {
-      console.error('검색 실패:', error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
     }
   };
 
@@ -265,64 +236,6 @@ const AdminPage = () => {
             새 프로젝트 추가
           </button>
         </header>
-
-        {/* 검색 섹션 */}
-        <div className="search-section">
-          <h2>프로젝트 검색</h2>
-          <div className="search-container">
-            <input
-              type="text"
-              placeholder="프로젝트 검색..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
-            />
-            <button 
-              onClick={handleSearch}
-              disabled={isSearching}
-              className="search-btn"
-            >
-              {isSearching ? '검색 중...' : '검색'}
-            </button>
-          </div>
-          
-          {/* 검색 결과 */}
-          {searchResults.length > 0 && (
-            <div className="search-results">
-              <h3>검색 결과</h3>
-              <div className="projects-grid">
-                {searchResults.map((project) => (
-                  <div key={project.id} className="project-card">
-                    <div className="project-info">
-                      <h3>{project.title}</h3>
-                    </div>
-                    <div className="project-details">
-                      <div className="project-period">
-                        {formatPeriod(project.startDate, project.endDate)}
-                      </div>
-                      <div className="project-role">{project.role}</div>
-                    </div>
-                    <p>{project.body}</p>
-                    <div className="project-technologies">
-                      {Array.isArray(project.stack) ? 
-                        project.stack.map((tech, index) => (
-                          <span key={index} className="tech-tag">
-                            {tech}
-                          </span>
-                        )) : 
-                        project.stack?.split(' ')?.map((tech, index) => (
-                          <span key={index} className="tech-tag">
-                            {tech}
-                          </span>
-                        ))
-                      }
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* 프로젝트 추가/수정 폼 */}
         {(isAddingProject || editingProject) && (
