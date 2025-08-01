@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import "./AdminPage.css";
-import { searchProjects, createProject, updateProject, deleteProject } from '../apis/projectApi';
+import { searchProjects, createProject, deleteProject } from '../apis/search/project/projectApi';
 
 const AdminPage = () => {
   const [projects, setProjects] = useState([]);
   const [editingProject, setEditingProject] = useState(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [formData, setFormData] = useState({
+    id: "",
     title: "",
     startDate: "",
     endDate: "",
@@ -119,43 +120,70 @@ const AdminPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    let projectData;
     
-    const projectData = {
-      title: formData.title,
-      startDate: formData.startDate.split('-').join(''),
-      endDate: formData.endDate.split('-').join(''),
-      role: formData.role,
-      stack: formData.stack,
-      body: formData.body,
-      features: formData.features
-    };
+    if(formData.id === ""){
+      projectData = {
+        title: formData.title,
+        startDate: formData.startDate.split('-').join(''),
+        endDate: formData.endDate.split('-').join(''),
+        role: formData.role,
+        stack: formData.stack,
+        body: formData.body,
+        features: formData.features
+      };
+    }else{
+      projectData = {
+        id: formData.id,
+        title: formData.title,
+        startDate: formData.startDate.split('-').join(''),
+        endDate: formData.endDate.split('-').join(''),
+        role: formData.role,
+        stack: formData.stack,
+        body: formData.body,
+        features: formData.features
+      };
+    }
 
     try {
       console.log('projectData : ', projectData);
-        // 새 프로젝트 추가
-        const newProject = await createProject(projectData);
-        setProjects(prev => [...prev, newProject]);
-        setIsAddingProject(false);
+      
+      // 새 프로젝트 추가
+      const status = await createProject(projectData);
+      console.log('status : ', status);
+      setIsAddingProject(false);
+      
+      if(status.status === "success"){
+        alert('프로젝트 저장에 성공했습니다.');
+        // 성공 시에만 폼 초기화
+        setFormData({
+          id: "",
+          title: "",
+          startDate: "",
+          endDate: "",
+          role: "",
+          stack: "",
+          body: "",
+          features: ""
+        });
+        loadProjects();
+      }else{
+        alert('프로젝트 저장장에 실패했습니다.');
+      }
 
-      // 폼 초기화
-      setFormData({
-        title: "",
-        startDate: "",
-        endDate: "",
-        role: "",
-        stack: "",
-        body: "",
-        features: ""
-      });
+      
     } catch (error) {
       console.error('프로젝트 저장 실패:', error);
       alert('프로젝트 저장에 실패했습니다.');
+      // 에러 발생 시 폼을 그대로 유지 (editingProject와 isAddingProject 상태 유지)
     }
   };
 
   const handleEdit = (project) => {
     setEditingProject(project);
     setFormData({
+      id: project.id,
       title: project.title,
       startDate: project.startDate || '',
       endDate: project.endDate || '',

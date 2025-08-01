@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./Projects.css";
-import { useProjectSearch } from '../apis/useProjectSearch';
-import { searchProjects, searchAggregationProject } from '../apis/projectApi';
+import { useProjectSearch } from '../apis/search/project/useProjectSearch';
+import { searchProjects, searchAggregationProject } from '../apis/search/project/projectApi';
+import { searchAuto } from '../apis/search/auto/autoApi';
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [aggregation, setAggregation] = useState([]);
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
-  const [advancedFilters, setAdvancedFilters] = useState({
-    startDate: "",
-    endDate: "",
-    role: "",
-    technology: ""
-  });
+  
+  // 자동완성 관련 상태 추가
+  const [autoResult, setAutoResult] = useState([]);
+  const [showAutoResult, setShowAutoResult] = useState(false);
+  const [selectedAutoIndex, setSelectedAutoIndex] = useState(-1);
+  const searchInputRef = useRef(null);
+  const autoResultRef = useRef(null);
 
   // 프로젝트 검색 훅 사용
   const { query, setQuery, results, loading: searchLoading, error: searchError, search } = useProjectSearch();
@@ -76,6 +77,128 @@ const Projects = () => {
     };
   }, []);
 
+  // 자동완성 제안 생성 함수
+  const generateSuggestions = async (input) => {
+    if (!input.trim()) {
+      setAutoResult([]);
+      return;
+    }
+
+    const inputLower = input.toLowerCase();
+
+    const params = {
+      query: inputLower,
+      size: 5,
+      page: 1
+    }
+
+    const auto = await searchAuto(params);
+    const result = auto.data.result;
+
+    const allAutoResult = [];
+
+    let index = 0;
+    result.forEach(result => {
+      allAutoResult.push({
+        word: result.word,
+        index: index
+      });
+      index++;
+    });
+
+    console.log(allAutoResult);
+
+    setAutoResult(allAutoResult);
+  };
+
+  // 검색어 변경 시 자동완성 제안 업데이트
+  useEffect(() => {
+    generateSuggestions(searchTerm);
+  }, [searchTerm, projects]);
+
+  // 자동완성 제안 선택 처리
+  const handleSuggestionClick = (suggestion) => {
+    setSearchTerm(suggestion);
+    setShowAutoResult(false);
+    setSelectedAutoIndex(-1);
+  };
+
+  // 검색 실행 함수 추가
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return;
+    
+    try {
+      const params = {
+        query: searchTerm,
+        startDate: '',
+        endDate: '',
+        aggrField: 'stack'
+      };
+
+      const project = await searchProjects(params);
+      setProjects(project.data.result);
+
+      const aggregation = await searchAggregationProject(params);
+      setAggregation(aggregation.data.result);
+      
+      setActiveFilter("all"); // 검색 시 필터 초기화
+    } catch (error) {
+      console.error('프로젝트 검색 실패:', error);
+    }
+  };
+
+  // Enter 키로 검색 실행
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearch();
+      setShowAutoResult(false);
+      setSelectedAutoIndex(-1);
+      return;
+    }
+
+    if (!showAutoResult) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedAutoIndex(prev => 
+          prev < autoResult.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedAutoIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Escape':
+        setShowAutoResult(false);
+        setSelectedAutoIndex(-1);
+        break;
+    }
+  };
+
+  // 검색 입력 변경 처리
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    setShowAutoResult(value.length > 0);
+    setSelectedAutoIndex(-1);
+  };
+
+  // 외부 클릭 시 자동완성 닫기
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchInputRef.current && !searchInputRef.current.contains(event.target) &&
+          autoResultRef.current && !autoResultRef.current.contains(event.target)) {
+        setShowAutoResult(false);
+        setSelectedAutoIndex(-1);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // period를 startDate와 endDate로 변환하는 함수
   const formatPeriod = (startDate, endDate) => {
     
@@ -101,58 +224,13 @@ const Projects = () => {
         return `${dateString.getFullYear()}.${String(dateString.getMonth() + 1).padStart(2, '0')}`;
       }
       
-      // 기타 형식은 그대로 반환
       return dateString;
     };
-    
-    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-  };
 
-  // 상세검색 필터링 로직
-  const filteredProjects = projects.filter((project) => {
-    const matchesSearch = searchTerm === "" || 
-      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.technologies.some(tech => tech.toLowerCase().includes(searchTerm.toLowerCase()));
+    const formattedStartDate = formatDate(startDate);
+    const formattedEndDate = formatDate(endDate);
     
-    // 기간 필터링
-    let matchesDate = true;
-    if (advancedFilters.startDate || advancedFilters.endDate) {
-      const projectDates = formatPeriod(project.startDate, project.endDate);
-      
-      if (advancedFilters.startDate && projectDates.startDate < advancedFilters.startDate) {
-        matchesDate = false;
-      }
-      if (advancedFilters.endDate && projectDates.endDate > advancedFilters.endDate) {
-        matchesDate = false;
-      }
-    }
-    
-    const matchesRole = advancedFilters.role === "" || 
-      project.role.toLowerCase().includes(advancedFilters.role.toLowerCase());
-    
-    const matchesTechnology = advancedFilters.technology === "" || 
-      project.technologies.some(tech => 
-        tech.toLowerCase().includes(advancedFilters.technology.toLowerCase())
-      );
-    
-    return matchesSearch && matchesDate && matchesRole && matchesTechnology;
-  });
-
-  const handleAdvancedFilterChange = (field, value) => {
-    setAdvancedFilters(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const clearAdvancedFilters = () => {
-    setAdvancedFilters({
-      startDate: "",
-      endDate: "",
-      role: "",
-      technology: ""
-    });
+    return `${formattedStartDate} ~ ${formattedEndDate}`;
   };
 
   const stackSearch = async (stack) => {
@@ -190,76 +268,44 @@ const Projects = () => {
         </div>
 
         <div className="project-search">
-          <input
-            type="text"
-            placeholder="프로젝트 제목, 설명, 역할, 기술 스택으로 검색..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
-          
-          {/* 상세검색 버튼 */}
-          <button
-            className="advanced-search-btn"
-            onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
-          >
-            {showAdvancedSearch ? "상세검색 닫기" : "상세검색"}
-          </button>
-        </div>
-
-        {/* 상세검색 옵션들 */}
-        {showAdvancedSearch && (
-          <div className="advanced-search-options">
-            <div className="advanced-search-row">
-              <div className="advanced-search-item">
-                <label>시작일:</label>
-                <input
-                  type="date"
-                  value={advancedFilters.startDate}
-                  onChange={(e) => handleAdvancedFilterChange('startDate', e.target.value)}
-                />
-              </div>
-              
-              <div className="advanced-search-item">
-                <label>종료일:</label>
-                <input
-                  type="date"
-                  value={advancedFilters.endDate}
-                  onChange={(e) => handleAdvancedFilterChange('endDate', e.target.value)}
-                />
-              </div>
-              
-              <div className="advanced-search-item">
-                <label>역할:</label>
-                <input
-                  type="text"
-                  placeholder="예: 백엔드 개발, 검색엔진 개발"
-                  value={advancedFilters.role}
-                  onChange={(e) => handleAdvancedFilterChange('role', e.target.value)}
-                />
-              </div>
-              
-              <div className="advanced-search-item">
-                <label>기술스택:</label>
-                <input
-                  type="text"
-                  placeholder="예: Java, Elasticsearch, Python"
-                  value={advancedFilters.technology}
-                  onChange={(e) => handleAdvancedFilterChange('technology', e.target.value)}
-                />
-              </div>
-            </div>
+          <div className="search-input-container" ref={searchInputRef}>
+            <input
+              type="text"
+              placeholder="프로젝트 제목, 설명, 역할, 기술 스택으로 검색..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setShowAutoResult(searchTerm.length > 0)}
+              className="search-input"
+            />
             
-            <div className="advanced-search-actions">
-              <button 
-                className="clear-filters-btn"
-                onClick={clearAdvancedFilters}
-              >
-                필터 초기화
-              </button>
-            </div>
+            {/* 검색 버튼 */}
+            <button
+              className="search-btn"
+              onClick={handleSearch}
+              type="button"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            
+            {/* 자동완성 */}
+            {showAutoResult && autoResult.length > 0 && (
+              <div className="search-suggestions" ref={autoResultRef}>
+                {autoResult.map((result, index) => (
+                  <div
+                    key={`${result.word}-${index}`}
+                    className={`suggestion-item ${index === selectedAutoIndex ? 'selected' : ''}`}
+                    onClick={() => handleSuggestionClick(result.word)}
+                  >
+                    <span className="suggestion-text">{result.word}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
         <div className="project-filters">
           <button
@@ -287,70 +333,62 @@ const Projects = () => {
         {projects.length === 0 && (
           <div className="no-results">
             <div className="no-results-content">
-              <h3>검색된 프로젝트가 없습니다</h3>
-              <p>다른 검색 조건을 시도해보세요.</p>
+              <h3>검색 결과가 없습니다</h3>
+              <p>다른 검색어를 입력하거나 필터를 변경해보세요.</p>
             </div>
           </div>
         )}
 
-        {/* 검색 결과가 있을 때 프로젝트 그리드 표시 */}
-        {projects.length > 0 && (
-          <div className="projects-grid">
-            {projects.map((project) => (
-              <div key={project.id} className="project-card">
-                <div className="project-info">
+        <div className="projects-grid">
+          {projects.map((project) => (
+            <div key={project.id} className="project-card">
+              <div className="project-content">
+                <div className="project-header">
                   <h3>{project.title}</h3>
                 </div>
-                <div className="project-details">
-                  <div className="project-period">
+                
+                <div className="project-info">
+                  <span className="project-period">
                     {formatPeriod(project.startDate, project.endDate)}
-                  </div>
-                  <div className="project-role">{project.role}</div>
+                  </span>
+                  <span className="project-role">{project.role}</span>
                 </div>
+                
                 <div className="project-work-content">
                   <strong>업무내용</strong>
                   <ul>
-                    {Array.isArray(project.body) ? 
-                      project.body.map((content, index) => (
-                        <li key={index}>{content}</li>
-                      )) : 
+                    {
                       project.body?.split('|')?.map((content, index) => (  // 파이프라인으로 구분
                         <li key={index}>{content.trim()}</li>
                       ))
                     }
                   </ul>
                 </div>
-                <div className="project-features">
-                  <strong>주요 성과</strong>
-                  <ul>
-                    {Array.isArray(project.features) ? 
-                      project.features.map((feature, index) => (
-                        <li key={index}>{feature}</li>
-                      )) : 
-                      project.features?.split('|')?.map((feature, index) => (  // 파이프라인으로 구분
+                
+                {project.features && project.features.length > 0 && (
+                  <div className="project-features">
+                    <h4>주요 기능</h4>
+                    <ul>
+                      {project.features?.split('|')?.map((feature, index) => (  // 파이프라인으로 구분
                         <li key={index}>{feature.trim()}</li>
-                      ))
-                    }
-                  </ul>
-                </div>
-                <div className="project-technologies">
-                  {Array.isArray(project.stack) ? 
-                    project.stack.map((tech, index) => (
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {project.stack && project.stack.length > 0 && (
+                  <div className="project-technologies">
+                    {project.stack?.split(' ')?.map((tech, index) => (  // 공백으로 구분
                       <span key={index} className="tech-tag">
                         {tech}
                       </span>
-                    )) : 
-                    project.stack?.split(' ')?.map((tech, index) => (
-                      <span key={index} className="tech-tag">
-                        {tech}
-                      </span>
-                    ))
-                  }
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
