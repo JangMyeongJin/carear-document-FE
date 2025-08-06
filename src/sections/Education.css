@@ -69,25 +69,36 @@
 }
 
 .education-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+.degree-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .education-header h4 {
   font-size: 1.3rem;
   color: #2c3e50;
-  margin-bottom: 0.5rem;
+  margin: 0;
   font-weight: 600;
 }
 
 .education-header h5 {
   font-size: 1.1rem;
   color: #3498db;
-  margin-bottom: 0.5rem;
+  margin: 0;
   font-weight: 500;
 }
 
 .period,
-.gpa {
+.status {
   display: inline-block;
   background: #ecf0f1;
   color: #7f8c8d;
@@ -98,9 +109,11 @@
   margin-right: 0.5rem;
 }
 
-.gpa {
-  background: #e8f5e8;
-  color: #27ae60;
+.status {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+  font-weight: 600;
 }
 
 .description {
