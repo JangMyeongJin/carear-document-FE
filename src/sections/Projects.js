@@ -52,8 +52,8 @@ const Projects = () => {
             startDate: "20230301",  // YYYYMMDD 형식
             endDate: "20231231",    // YYYYMMDD 형식
             role: "백엔드 개발",
-            stack: ["Elasticsearch", "Java", "Kafka", "Redis", "Docker"],
-            features: ["대용량 검색 처리", "실시간 인덱싱", "검색 성능 최적화", "모니터링 대시보드"]
+            stack: "Elasticsearch Java Kafka Redis Docker",
+            features: "대용량 검색 처리|실시간 인덱싱|검색 성능 최적화|모니터링 대시보드"
           },
           {
             id: 2,
@@ -62,8 +62,8 @@ const Projects = () => {
             startDate: "20220601",  // YYYYMMDD 형식
             endDate: "20230228",    // YYYYMMDD 형식
             role: "검색엔진 개발",
-            stack: ["Lucene", "Java", "Spring", "MySQL", "Maven"],
-            features: ["커스텀 랭킹 알고리즘", "도메인 특화 검색", "검색 품질 평가", "성능 튜닝"]
+            stack: "Lucene Java Spring MySQL Maven",
+            features: "커스텀 랭킹 알고리즘|도메인 특화 검색|검색 품질 평가|성능 튜닝"
           }
         ];
         setProjects(initialProjects);

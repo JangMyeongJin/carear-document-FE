@@ -33,8 +33,7 @@ const Footer = () => {
           <div className="footer-section">
             <h4>연락처</h4>
             <ul>
-              <li>📧 search.engineer@example.com</li>
-              <li>📱 +82 10-1234-5678</li>
+              <li>📧 jean9710@naver.com</li>
               <li>📍 서울특별시, 대한민국</li>
             </ul>
           </div>
@@ -50,18 +49,11 @@ const Footer = () => {
                 🐙 GitHub
               </a>
               <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                💼 LinkedIn
-              </a>
-              <a
                 href="https://medium.com"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                📝 Medium
+                ✍️ Blog
               </a>
             </div>
           </div>
