@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import "./Contact.css";
+import { sendMail } from "../apis/mail/mailApi";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    subject: "",
-    message: "",
+    title: "",
+    content: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,14 +19,51 @@ const Contact = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // 빈 값 검증
+    const emptyFields = [];
+    
+    if (!formData.name.trim()) {
+      emptyFields.push("이름");
+    }
+    if (!formData.email.trim()) {
+      emptyFields.push("이메일");
+    }
+    if (!formData.title.trim()) {
+      emptyFields.push("제목");
+    }
+    if (!formData.content.trim()) {
+      emptyFields.push("메시지");
+    }
+    
+    // 빈 값이 있으면 알림 표시
+    if (emptyFields.length > 0) {
+      alert(`다음 필드를 입력해주세요: ${emptyFields.join(", ")}`);
+      return;
+    }
+    
+    // 이메일 형식 검증
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("올바른 이메일 형식을 입력해주세요.");
+      return;
+    }
+    
     setIsSubmitting(true);
 
     // 실제 폼 제출 로직을 여기에 구현
-    setTimeout(() => {
-      alert("메시지가 성공적으로 전송되었습니다!");
-      setFormData({ name: "", email: "", subject: "", message: "" });
+    setTimeout(async () => {
+      const response = await sendMail(formData);
+
+      if (response.status === "success") {
+        alert("메시지가 성공적으로 전송되었습니다!");
+      } else {
+        alert("메시지 전송에 실패했습니다.");
+      }
+
+      setFormData({ name: "", email: "", title: "", content: "" });
       setIsSubmitting(false);
     }, 1000);
   };
@@ -34,26 +72,20 @@ const Contact = () => {
     {
       icon: "📧",
       title: "이메일",
-      value: "search.engineer@example.com",
-      link: "mailto:search.engineer@example.com",
+      value: "jean971013568@gmail.com",
+      link: "mailto:jean971013568@gmail.com",
+    },    
+    {
+      icon: "🐙",
+      title: "Github",
+      value: "https://github.com/JangMyeongJin",
+      link: "https://github.com/JangMyeongJin",
     },
     {
-      icon: "📱",
-      title: "전화번호",
-      value: "+82 10-1234-5678",
-      link: "tel:+821012345678",
-    },
-    {
-      icon: "📍",
-      title: "위치",
-      value: "서울특별시, 대한민국",
-      link: null,
-    },
-    {
-      icon: "💼",
-      title: "LinkedIn",
-      value: "linkedin.com/in/search-engineer",
-      link: "https://linkedin.com/in/search-engineer",
+      icon: "🌐",
+      title: "Blog",
+      value: "https://web-developer1.tistory.com/",
+      link: "https://web-developer1.tistory.com/",
     },
   ];
 
@@ -67,10 +99,9 @@ const Contact = () => {
 
         <div className="contact-content">
           <div className="contact-info">
-            <h3>연락처 정보</h3>
+            <h3>소셜 미디어</h3>
             <p>
-              검색엔진 구축, 성능 최적화, 검색 알고리즘 개발 등 검색 관련
-              프로젝트 문의나 기술 협업 제안을 환영합니다!
+              검색 관련 프로젝트 문의나 기술 협업 제안을 환영합니다!
             </p>
 
             <div className="contact-items">
@@ -93,44 +124,6 @@ const Contact = () => {
                   </div>
                 </div>
               ))}
-            </div>
-
-            <div className="social-links">
-              <h4>소셜 미디어</h4>
-              <div className="social-icons">
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-icon"
-                >
-                  <span>🐙</span>
-                </a>
-                <a
-                  href="https://linkedin.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-icon"
-                >
-                  <span>💼</span>
-                </a>
-                <a
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-icon"
-                >
-                  <span>🐦</span>
-                </a>
-                <a
-                  href="https://medium.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-icon"
-                >
-                  <span>📝</span>
-                </a>
-              </div>
             </div>
           </div>
 
@@ -167,9 +160,9 @@ const Contact = () => {
                 <label htmlFor="subject">제목 *</label>
                 <input
                   type="text"
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
+                  id="title"
+                  name="title"
+                  value={formData.title}
                   onChange={handleChange}
                   required
                   placeholder="제목을 입력하세요"
@@ -179,9 +172,9 @@ const Contact = () => {
               <div className="form-group">
                 <label htmlFor="message">메시지 *</label>
                 <textarea
-                  id="message"
-                  name="message"
-                  value={formData.message}
+                  id="content"
+                  name="content"
+                  value={formData.content}
                   onChange={handleChange}
                   required
                   rows="5"
