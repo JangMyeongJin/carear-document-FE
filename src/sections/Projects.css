@@ -450,6 +450,227 @@
   line-height: 1.5;
 }
 
+/* 날짜 필터 토글 버튼 */
+.date-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  background: #f8f9fa;
+  border: 2px solid #e1e5e9;
+  color: #6c757d;
+  border-radius: 25px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  margin-top: 0; /* 기존 margin-top 제거 */
+}
+
+.date-filter-toggle:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  color: #495057;
+  transform: translateY(-1px);
+}
+
+.date-filter-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 날짜 필터 옵션 */
+.date-filter-options {
+  width: 100%;
+  background: #f8f9fa;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin: 1rem 0 2rem 0;
+  border: 1px solid #e1e5e9;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.date-input-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.date-input-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.date-input-item label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.date-input {
+  padding: 0.6rem 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.date-input:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.date-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.clear-date-btn {
+  padding: 0.5rem 1rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-date-btn:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+.apply-date-btn {
+  padding: 0.5rem 1rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.apply-date-btn:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+/* 정렬 옵션 */
+.sort-options {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.sort-buttons {
+  display: flex;
+  gap: 1rem;
+  background: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 25px;
+  border: 1px solid #e1e5e9;
+}
+
+.sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background: transparent;
+  border: none;
+  color: #6c757d;
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.sort-btn:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.sort-btn.active {
+  background: #3498db;
+  color: white;
+}
+
+.sort-arrow {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* 기술 스택 필터 토글 버튼 */
+.stack-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  background: #f8f9fa;
+  border: 2px solid #e1e5e9;
+  color: #6c757d;
+  border-radius: 25px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  margin-top: 0; /* 기존 margin-top 제거 */
+  margin-left: 0; /* 기존 margin-left 제거 */
+}
+
+.stack-filter-toggle:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  color: #495057;
+  transform: translateY(-1px);
+}
+
+.stack-filter-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 기술 스택 필터 옵션 */
+.stack-filter-options {
+  width: 100%;
+  background: #f8f9fa;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin: 1rem 0 2rem 0;
+  border: 1px solid #e1e5e9;
+  animation: slideDown 0.3s ease;
+}
+
+.stack-filter-options .project-filters {
+  margin-bottom: 0;
+}
+
+/* 검색 버튼들을 한 줄에 배치 */
+.search-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  justify-content: center;
+}
+
 @media (max-width: 768px) {
   .projects {
     padding: 60px 0;
@@ -502,5 +723,50 @@
   .project-info {
     flex-direction: column;
     gap: 0.5rem;
+  }
+
+  .date-input-group {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .date-filter-options {
+    padding: 1rem;
+    margin: 0 1rem 1rem 1rem;
+  }
+
+  .date-filter-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .sort-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .sort-btn {
+    justify-content: center;
+  }
+
+  .stack-filter-toggle {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .stack-filter-options {
+    padding: 1rem;
+    margin: 0 1rem 1rem 1rem;
+  }
+
+  .search-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .date-filter-toggle,
+  .stack-filter-toggle {
+    margin-top: 0;
+    margin-left: 0;
   }
 }

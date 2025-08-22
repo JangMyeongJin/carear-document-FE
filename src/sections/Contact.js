@@ -72,15 +72,21 @@ const Contact = () => {
     {
       icon: "📧",
       title: "이메일",
-      value: "search.engineer@example.com",
-      link: "mailto:search.engineer@example.com",
+      value: "jean971013568@gmail.com",
+      link: "mailto:jean971013568@gmail.com",
+    },    
+    {
+      icon: "🐙",
+      title: "Github",
+      value: "https://github.com/JangMyeongJin",
+      link: "https://github.com/JangMyeongJin",
     },
     {
-      icon: "📍",
-      title: "위치",
-      value: "서울특별시, 대한민국",
-      link: null,
-    }
+      icon: "🌐",
+      title: "Blog",
+      value: "https://web-developer1.tistory.com/",
+      link: "https://web-developer1.tistory.com/",
+    },
   ];
 
   return (
@@ -93,10 +99,9 @@ const Contact = () => {
 
         <div className="contact-content">
           <div className="contact-info">
-            <h3>연락처 정보</h3>
+            <h3>소셜 미디어</h3>
             <p>
-              검색엔진 구축, 성능 최적화, 검색 알고리즘 개발 등 검색 관련
-              프로젝트 문의나 기술 협업 제안을 환영합니다!
+              검색 관련 프로젝트 문의나 기술 협업 제안을 환영합니다!
             </p>
 
             <div className="contact-items">
@@ -119,44 +124,6 @@ const Contact = () => {
                   </div>
                 </div>
               ))}
-            </div>
-
-            <div className="social-links">
-              <h4>소셜 미디어</h4>
-              <div className="social-icons">
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-icon"
-                >
-                  <span>🐙</span>
-                </a>
-                <a
-                  href="https://linkedin.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-icon"
-                >
-                  <span>💼</span>
-                </a>
-                <a
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-icon"
-                >
-                  <span>🐦</span>
-                </a>
-                <a
-                  href="https://medium.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-icon"
-                >
-                  <span>📝</span>
-                </a>
-              </div>
             </div>
           </div>
 

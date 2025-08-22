@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./Projects.css";
-import { useProjectSearch } from '../apis/search/project/useProjectSearch';
 import { searchProjects, searchAggregationProject } from '../apis/search/project/projectApi';
 import { searchAuto } from '../apis/search/auto/autoApi';
 
@@ -10,15 +9,24 @@ const Projects = () => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   
+  // 날짜 검색 관련 상태 추가
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  
+  // 기술 스택 필터 온오프 상태 추가
+  const [showStackFilter, setShowStackFilter] = useState(false);
+  
+  // 정렬 관련 상태 추가
+  const [sortBy, setSortBy] = useState("date"); // "date" 또는 "title"
+  const [sortOrder, setSortOrder] = useState("desc"); // "asc" 또는 "desc"
+  
   // 자동완성 관련 상태 추가
   const [autoResult, setAutoResult] = useState([]);
   const [showAutoResult, setShowAutoResult] = useState(false);
   const [selectedAutoIndex, setSelectedAutoIndex] = useState(-1);
   const searchInputRef = useRef(null);
   const autoResultRef = useRef(null);
-
-  // 프로젝트 검색 훅 사용
-  const { query, setQuery, results, loading: searchLoading, error: searchError, search } = useProjectSearch();
 
   // 초기 프로젝트 데이터 로드
   useEffect(() => {
@@ -123,16 +131,15 @@ const Projects = () => {
     setSelectedAutoIndex(-1);
   };
 
-  // 검색 실행 함수 추가
+  // 검색 실행 함수 수정
   const handleSearch = async () => {
-    if (!searchTerm.trim()) return;
-    
     try {
       const params = {
         query: searchTerm,
-        startDate: '',
-        endDate: '',
-        aggrField: 'stack'
+        startDate: startDate,
+        endDate: endDate,
+        aggrField: 'stack',
+        sort: sortBy + '/' + sortOrder
       };
 
       const project = await searchProjects(params);
@@ -199,6 +206,26 @@ const Projects = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // 날짜 필터 초기화 함수
+  const clearDateFilter = () => {
+    setStartDate("");
+    setEndDate("");
+  };
+
+  // 정렬 변경 함수
+  const handleSortChange = (newSortBy) => {
+    if (sortBy === newSortBy) {
+      // 같은 정렬 기준이면 순서만 변경
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // 다른 정렬 기준이면 기본값으로 설정
+      setSortBy(newSortBy);
+      setSortOrder("desc");
+    }
+    // 정렬 변경 시 자동으로 검색 실행
+    setTimeout(() => handleSearch(), 0);
+  };
+
   // period를 startDate와 endDate로 변환하는 함수
   const formatPeriod = (startDate, endDate) => {
     
@@ -243,9 +270,10 @@ const Projects = () => {
 
       const params = {
         query: query,
-        startDate: '',
-        endDate: '',
-        aggrField: 'stack'
+        startDate: startDate,
+        endDate: endDate,
+        aggrField: 'stack',
+        sort: sortBy + '/' + sortOrder
       };
 
       const project = await searchProjects(params);
@@ -264,7 +292,7 @@ const Projects = () => {
       <div className="container">
         <div className="section-header">
           <h2>Projects</h2>
-          <p>제가 참여한 프로젝트들을 확인해보세요</p>
+          <p>제가 참여한 프로젝트들을 검색하고 확인해보세요</p>
         </div>
 
         <div className="project-search">
@@ -305,28 +333,122 @@ const Projects = () => {
               </div>
             )}
           </div>
+
+          {/* 검색 버튼들을 한 줄에 배치 */}
+          <div className="search-buttons">
+            {/* 날짜 필터 토글 버튼 */}
+            <button
+              className="date-filter-toggle"
+              onClick={() => setShowDateFilter(!showDateFilter)}
+            >
+
+              날짜 검색
+            </button>
+
+            {/* 기술 스택 필터 토글 버튼 */}
+            <button
+              className="stack-filter-toggle"
+              onClick={() => setShowStackFilter(!showStackFilter)}
+            >
+
+              기술 스택 검색
+            </button>
+          </div>
         </div>
 
-        <div className="project-filters">
-          <button
-            className={`filter-btn ${
-              activeFilter === "all" ? "active" : ""
-            }`}
-            onClick={() => stackSearch("all")}
-          >
-            기술 스택 전체
-          </button>
-          {aggregation.map((filter) => (
+        {/* 날짜 필터 옵션 */}
+        {showDateFilter && (
+          <div className="date-filter-options">
+            <div className="date-input-group">
+              <div className="date-input-item">
+                <label>시작 날짜</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="date-input"
+                />
+              </div>
+              <div className="date-input-item">
+                <label>종료 날짜</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="date-input"
+                />
+              </div>
+            </div>
+            <div className="date-filter-actions">
+              <button
+                className="clear-date-btn"
+                onClick={clearDateFilter}
+              >
+                날짜 초기화
+              </button>
+              <button
+                className="apply-date-btn"
+                onClick={handleSearch}
+              >
+                적용
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 기술 스택 필터 옵션 */}
+        {showStackFilter && (
+          <div className="stack-filter-options">
+            <div className="project-filters">
+              <button
+                className={`filter-btn ${
+                  activeFilter === "all" ? "active" : ""
+                }`}
+                onClick={() => stackSearch("all")}
+              >
+                기술 스택 전체
+              </button>
+              {aggregation.map((filter) => (
+                <button
+                  key={filter.key}
+                  className={`filter-btn ${
+                    activeFilter === filter.key ? "active" : ""
+                  }`}
+                  onClick={() => stackSearch(filter.key)}
+                >
+                  {filter.key} ({filter.count})
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 정렬 옵션 */}
+        <div className="sort-options">
+          <div className="sort-buttons">
             <button
-              key={filter.key}
-              className={`filter-btn ${
-                activeFilter === filter.key ? "active" : ""
-              }`}
-              onClick={() => stackSearch(filter.key)}
+              className={`sort-btn ${sortBy === "date" ? "active" : ""}`}
+              onClick={() => handleSortChange("date")}
             >
-              {filter.key} ({filter.count})
+              날짜순
+              {sortBy === "date" && (
+                <span className="sort-arrow">
+                  {sortOrder === "desc" ? "↓" : "↑"}
+                </span>
+              )}
             </button>
-          ))}
+            <button
+              className={`sort-btn ${sortBy === "title" ? "active" : ""}`}
+              onClick={() => handleSortChange("title")}
+            >
+              프로젝트명순
+              {sortBy === "title" && (
+                <span className="sort-arrow">
+                  {sortOrder === "desc" ? "↓" : "↑"}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* 검색 결과가 없을 때 메시지 표시 */}

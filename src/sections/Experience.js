@@ -5,8 +5,8 @@ const Experience = () => {
   const experiences = [
     {
       id: 1,
-      company: "(주)클러쉬 (Clush)",
-      position: "검색 개발자, 검색엔진 엔지니어",
+      company: "검색 개발자, 검색엔진 엔지니어",
+      position: "(주)클러쉬 (Clush)",
       period: "2025.05 - 현재",
       startDate: "2025-05",
       endDate: "현재",
@@ -20,8 +20,8 @@ const Experience = () => {
     },
     {
       id: 3,
-      company: "(주)프로텐 (Proten)",
-      position: "검색 개발자, 검색엔진 엔지니어",
+      company: "검색 개발자, 검색엔진 엔지니어",
+      position: "(주)프로텐 (Proten)",
       period: "2021.12 - 2025.04",
       startDate: "2021-12",
       endDate: "2025-04",

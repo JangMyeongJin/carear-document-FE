@@ -26,7 +26,7 @@ const Header = () => {
     <header className={`header ${isScrolled ? "scrolled" : ""}`}>
       <div className="header-container">
         <div className="logo">
-          <h2>Portfolio</h2>
+          <h2>MY Career</h2>
         </div>
 
         <nav className={`nav ${isMobileMenuOpen ? "mobile-open" : ""}`}>

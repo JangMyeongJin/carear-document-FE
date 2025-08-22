@@ -11,8 +11,8 @@ const Footer = () => {
       <div className="container">
         <div className="footer-content">
           <div className="footer-section">
-            <h3>Search Engine Portfolio</h3>
-            <p>정확하고 빠른 검색 경험을 제공하는 검색엔진 엔지니어입니다.</p>
+            <h3>MY Career</h3>
+            <p>정확하고 빠른 검색 경험을 제공하는 검색엔진 엔지니어 및 검색 개발자입니다.</p>
           </div>
 
           <div className="footer-section">
@@ -27,14 +27,19 @@ const Footer = () => {
               <li>
                 <a href="#projects">Projects</a>
               </li>
+              <li>
+                <a href="#education">Education</a>
+              </li>
+              <li>
+                <a href="#contact">Contact</a>
+              </li>
             </ul>
           </div>
 
           <div className="footer-section">
-            <h4>연락처</h4>
+            <h4>이메일</h4>
             <ul>
-              <li>📧 jean9710@naver.com</li>
-              <li>📍 서울특별시, 대한민국</li>
+              <li>📧 jean971013568@gmail.com</li>
             </ul>
           </div>
 
@@ -42,14 +47,14 @@ const Footer = () => {
             <h4>소셜 미디어</h4>
             <div className="social-links">
               <a
-                href="https://github.com"
+                href="https://github.com/JangMyeongJin"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 🐙 GitHub
               </a>
               <a
-                href="https://medium.com"
+                href="https://web-developer1.tistory.com/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -61,7 +66,7 @@ const Footer = () => {
 
         <div className="footer-bottom">
           <div className="footer-info">
-            <p>&copy; 2024 Search Engine Portfolio. All rights reserved.</p>
+            <p>&copy; 2025 My Career. All rights reserved.</p>
             <p>Made with 🔍 using React.js</p>
           </div>
 
