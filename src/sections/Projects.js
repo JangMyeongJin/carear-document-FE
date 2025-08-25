@@ -18,7 +18,7 @@ const Projects = () => {
   const [showStackFilter, setShowStackFilter] = useState(false);
   
   // 정렬 관련 상태 추가
-  const [sortBy, setSortBy] = useState("date"); // "date" 또는 "title"
+  const [sortBy, setSortBy] = useState("startDate"); // "date" 또는 "title"
   const [sortOrder, setSortOrder] = useState("desc"); // "asc" 또는 "desc"
   
   // 자동완성 관련 상태 추가
@@ -28,57 +28,86 @@ const Projects = () => {
   const searchInputRef = useRef(null);
   const autoResultRef = useRef(null);
 
+  // 페이징 관련 정보 추가
+  const [pageInfo, setPageInfo] = useState({
+    page: 0,
+    size: 0,
+    totalPage: 0,
+    totalCount: 0
+  });
+
+  const loadProjects = async (page = 1) => {
+    try {
+      const params = {
+        query: '',
+        startDate: '',
+        endDate: '',
+        sort: sortBy + '/' + sortOrder,
+        page: page,
+        size: 6
+      };
+
+      const project = await searchProjects(params);
+      setProjects(project.data.result);
+      setPageInfo(project.data.page);
+
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return; // 중단된 요청은 무시
+      }
+      console.error('프로젝트 로드 실패:', error);
+      // 에러 시 기본 데이터 사용
+      const initialProjects = [
+        {
+          id: 1,
+          title: "대용량 검색 플랫폼",
+          body: "일일 100만 건 이상의 검색 요청을 처리하는 대용량 검색 플랫폼입니다. Elasticsearch 기반으로 구축되어 높은 성능과 확장성을 제공합니다.",
+          startDate: "20230301",  // YYYYMMDD 형식
+          endDate: "20231231",    // YYYYMMDD 형식
+          role: "백엔드 개발",
+          stack: "Elasticsearch Java Kafka Redis Docker",
+          features: "대용량 검색 처리|실시간 인덱싱|검색 성능 최적화|모니터링 대시보드"
+        },
+        {
+          id: 2,
+          title: "자체 검색엔진 개발",
+          body: "Lucene 기반의 자체 검색엔진을 개발하여 특정 도메인에 최적화된 검색 서비스를 제공합니다.",
+          startDate: "20220601",  // YYYYMMDD 형식
+          endDate: "20230228",    // YYYYMMDD 형식
+          role: "검색엔진 개발",
+          stack: "Lucene Java Spring MySQL Maven",
+          features: "커스텀 랭킹 알고리즘|도메인 특화 검색|검색 품질 평가|성능 튜닝"
+        }
+      ];
+      setProjects(initialProjects);
+    }
+  };
+
+  const loadAggregation = async () => {
+    try {
+      const params = {
+        query: '',
+        startDate: '',
+        endDate: '',
+        aggrField: 'stack',
+        sort: sortBy + '/' + sortOrder,
+        page: 1,
+        size: 30
+      };
+  
+      const aggregation = await searchAggregationProject(params);
+      setAggregation(aggregation.data.result);
+    } catch (error) {
+      console.error('기술 스택 통계 실패:', error);
+    }
+  }
+
   // 초기 프로젝트 데이터 로드
   useEffect(() => {
     const abortController = new AbortController();
-    
-    const loadProjects = async () => {
-      try {
-        const params = {
-          query: '',
-          startDate: '',
-          endDate: '',
-          aggrField: 'stack'
-        };
 
-        const project = await searchProjects(params);
-        setProjects(project.data.result);
-
-        const aggregation = await searchAggregationProject(params);
-        setAggregation(aggregation.data.result);
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          return; // 중단된 요청은 무시
-        }
-        console.error('프로젝트 로드 실패:', error);
-        // 에러 시 기본 데이터 사용
-        const initialProjects = [
-          {
-            id: 1,
-            title: "대용량 검색 플랫폼",
-            body: "일일 100만 건 이상의 검색 요청을 처리하는 대용량 검색 플랫폼입니다. Elasticsearch 기반으로 구축되어 높은 성능과 확장성을 제공합니다.",
-            startDate: "20230301",  // YYYYMMDD 형식
-            endDate: "20231231",    // YYYYMMDD 형식
-            role: "백엔드 개발",
-            stack: "Elasticsearch Java Kafka Redis Docker",
-            features: "대용량 검색 처리|실시간 인덱싱|검색 성능 최적화|모니터링 대시보드"
-          },
-          {
-            id: 2,
-            title: "자체 검색엔진 개발",
-            body: "Lucene 기반의 자체 검색엔진을 개발하여 특정 도메인에 최적화된 검색 서비스를 제공합니다.",
-            startDate: "20220601",  // YYYYMMDD 형식
-            endDate: "20230228",    // YYYYMMDD 형식
-            role: "검색엔진 개발",
-            stack: "Lucene Java Spring MySQL Maven",
-            features: "커스텀 랭킹 알고리즘|도메인 특화 검색|검색 품질 평가|성능 튜닝"
-          }
-        ];
-        setProjects(initialProjects);
-      }
-    };
-
-    loadProjects();
+    loadProjects(1);
+    loadAggregation();
 
     return () => {
       abortController.abort(); // 컴포넌트 언마운트 시 요청 중단
@@ -139,15 +168,15 @@ const Projects = () => {
         startDate: startDate,
         endDate: endDate,
         aggrField: 'stack',
-        sort: sortBy + '/' + sortOrder
+        sort: sortBy + '/' + sortOrder,
+        page: 1,
+        size: 6
       };
 
       const project = await searchProjects(params);
       setProjects(project.data.result);
+      setPageInfo(project.data.page);
 
-      const aggregation = await searchAggregationProject(params);
-      setAggregation(aggregation.data.result);
-      
       setActiveFilter("all"); // 검색 시 필터 초기화
     } catch (error) {
       console.error('프로젝트 검색 실패:', error);
@@ -273,19 +302,140 @@ const Projects = () => {
         startDate: startDate,
         endDate: endDate,
         aggrField: 'stack',
-        sort: sortBy + '/' + sortOrder
+        sort: sortBy + '/' + sortOrder,
+        page: 1,
+        size: 6
       };
 
       const project = await searchProjects(params);
       setProjects(project.data.result);
+      setPageInfo(project.data.page);
 
-      const aggregation = await searchAggregationProject(params);
-      setAggregation(aggregation.data.result);
     } catch (error) {
       console.error('프로젝트 검색 실패:', error);
     }
     setActiveFilter(stack);
-  }
+  };
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (newPage) => {
+    loadProjects(newPage);
+  };
+
+  // 페이지네이션 컴포넌트
+  const Pagination = () => {
+    const { page, totalPage } = pageInfo;
+    
+    if (totalPage <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    let startPage, endPage;
+    
+    // 현재 페이지가 앞쪽에 있을 때 (1~3페이지)
+    if (page <= 3) {
+      startPage = 1;
+      endPage = Math.min(maxVisiblePages, totalPage);
+    }
+    // 현재 페이지가 뒤쪽에 있을 때
+    else if (page >= totalPage - 2) {
+      startPage = Math.max(1, totalPage - maxVisiblePages + 1);
+      endPage = totalPage;
+    }
+    // 현재 페이지가 중간에 있을 때
+    else {
+      startPage = page - 2;
+      endPage = page + 2;
+    }
+
+    // 맨 처음 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 1일 때)
+    pages.push(
+      <button
+        key="first"
+        onClick={() => handlePageChange(1)}
+        className={`page-btn ${page === 1 ? 'disabled' : ''}`}
+        disabled={page === 1}
+        title="맨 처음"
+      >
+        처음
+      </button>
+    );
+
+    // 이전 페이지 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 1일 때)
+    pages.push(
+      <button
+        key="prev"
+        onClick={() => handlePageChange(page - 1)}
+        className={`page-btn ${page === 1 ? 'disabled' : ''}`}
+        disabled={page === 1}
+      >
+        이전
+      </button>
+    );
+
+    // 현재 페이지가 4 이상이고 totalPage가 5 이상일 때 앞에 "..." 추가
+    if (page >= 4 && totalPage >= 5) {
+      pages.push(
+        <span key="dots" className="page-dots">
+          ...
+        </span>
+      );
+    }
+
+    // 페이지 번호들
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`page-btn ${i === page ? 'active' : ''}`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    // 현재 페이지가 totalPage-3 이하이고 totalPage가 5 이상일 때 뒤에 "..." 추가
+    if (page <= totalPage - 3 && totalPage >= 5) {
+      pages.push(
+        <span key="dots" className="page-dots">
+          ...
+        </span>
+      );
+    }
+
+    // 다음 페이지 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 마지막 페이지일 때)
+    pages.push(
+      <button
+        key="next"
+        onClick={() => handlePageChange(page + 1)}
+        className={`page-btn ${page === totalPage ? 'disabled' : ''}`}
+        disabled={page === totalPage}
+      >
+        다음
+      </button>
+    );
+
+    // 맨 끝 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 마지막 페이지일 때)
+    pages.push(
+      <button
+        key="last"
+        onClick={() => handlePageChange(totalPage)}
+        className={`page-btn ${page === totalPage ? 'disabled' : ''}`}
+        disabled={page === totalPage}
+        title="맨 끝"
+      >
+        끝
+      </button>
+    );
+
+    return (
+      <div className="pagination">
+        {pages}
+      </div>
+    );
+  };
 
   return (
     <section className="projects" id="projects">
@@ -337,22 +487,30 @@ const Projects = () => {
           {/* 검색 버튼들을 한 줄에 배치 */}
           <div className="search-buttons">
             {/* 날짜 필터 토글 버튼 */}
-            <button
-              className="date-filter-toggle"
-              onClick={() => setShowDateFilter(!showDateFilter)}
-            >
-
-              날짜 검색
-            </button>
+            <div className="tooltip-container">
+              <button
+                className="date-filter-toggle"
+                onClick={() => setShowDateFilter(!showDateFilter)}
+              >
+                날짜 검색
+              </button>
+              <div className="tooltip">
+                클릭하면 날짜 검색 창이 나타납니다.
+              </div>
+            </div>
 
             {/* 기술 스택 필터 토글 버튼 */}
-            <button
-              className="stack-filter-toggle"
-              onClick={() => setShowStackFilter(!showStackFilter)}
-            >
-
-              기술 스택 검색
-            </button>
+            <div className="tooltip-container">
+              <button
+                className="stack-filter-toggle"
+                onClick={() => setShowStackFilter(!showStackFilter)}
+              >
+                기술 스택 검색
+              </button>
+              <div className="tooltip">
+                클릭하면 기술 스택 검색 창이 나타납니다.
+              </div>
+            </div>
           </div>
         </div>
 
@@ -427,11 +585,11 @@ const Projects = () => {
         <div className="sort-options">
           <div className="sort-buttons">
             <button
-              className={`sort-btn ${sortBy === "date" ? "active" : ""}`}
-              onClick={() => handleSortChange("date")}
+              className={`sort-btn ${sortBy === "startDate" ? "active" : ""}`}
+              onClick={() => handleSortChange("startDate")}
             >
               날짜순
-              {sortBy === "date" && (
+              {sortBy === "startDate" && (
                 <span className="sort-arrow">
                   {sortOrder === "desc" ? "↓" : "↑"}
                 </span>
@@ -511,6 +669,10 @@ const Projects = () => {
             </div>
           ))}
         </div>
+        <Pagination 
+            pageInfo={pageInfo} 
+            onPageChange={handlePageChange} 
+          />
       </div>
     </section>
   );

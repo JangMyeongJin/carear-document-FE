@@ -450,6 +450,49 @@
   line-height: 1.5;
 }
 
+/* 툴팁 컨테이너 */
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* 툴팁 스타일 */
+.tooltip {
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* 툴팁 화살표 */
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+}
+
+/* 툴팁 표시 */
+.tooltip-container:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* 날짜 필터 토글 버튼 */
 .date-filter-toggle {
   display: flex;
@@ -464,7 +507,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.9rem;
-  margin-top: 0; /* 기존 margin-top 제거 */
+  margin-top: 0;
 }
 
 .date-filter-toggle:hover {
@@ -632,8 +675,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.9rem;
-  margin-top: 0; /* 기존 margin-top 제거 */
-  margin-left: 0; /* 기존 margin-left 제거 */
+  margin-top: 0;
+  margin-left: 0;
 }
 
 .stack-filter-toggle:hover {
@@ -768,5 +811,12 @@
   .stack-filter-toggle {
     margin-top: 0;
     margin-left: 0;
+  }
+
+  /* 모바일에서 툴팁 위치 조정 */
+  .tooltip {
+    bottom: 130%;
+    font-size: 0.7rem;
+    padding: 0.4rem 0.6rem;
   }
 }

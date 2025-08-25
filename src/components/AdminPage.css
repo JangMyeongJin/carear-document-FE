@@ -304,6 +304,8 @@
   font-size: 1rem;
 }
 
+/* Pagination 관련 스타일 제거 (Pagination.css로 이동됨) */
+
 @media (max-width: 768px) {
   .admin-header {
     flex-direction: column;

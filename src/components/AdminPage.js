@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./AdminPage.css";
 import { searchProjects, createProject, deleteProject } from '../apis/search/project/projectApi';
+import Pagination from '../sections/Pagination';  // Pagination 컴포넌트 import
 
 const AdminPage = () => {
   const [projects, setProjects] = useState([]);
@@ -16,71 +17,39 @@ const AdminPage = () => {
     body: "",
     features: ""
   });
+  const [pageInfo, setPageInfo] = useState({
+    page: 0,
+    size: 0,
+    totalPage: 0,
+    totalCount: 0
+  });
 
   // 초기 프로젝트 데이터 로드
   useEffect(() => {
     const abortController = new AbortController();
     
-    const loadProjects = async () => {
-      try {
-        const params = {
-          query: '',
-          startDate: '',
-          endDate: ''
-        };
-
-        const data = await searchProjects(params, abortController.signal);
-        setProjects(data.data.result);
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          return; // 중단된 요청은 무시
-        }
-        console.error('프로젝트 로드 실패:', error);
-        // 에러 시 기본 데이터 사용
-        const initialProjects = [
-          {
-            id: 1,
-            title: "대용량 검색 플랫폼",
-            body: "일일 100만 건 이상의 검색 요청을 처리하는 대용량 검색 플랫폼입니다. Elasticsearch 기반으로 구축되어 높은 성능과 확장성을 제공합니다.",
-            startDate: "20230301",  // YYYYMMDD 형식
-            endDate: "20231231",    // YYYYMMDD 형식
-            role: "백엔드 개발",
-            stack: ["Elasticsearch", "Java", "Kafka", "Redis", "Docker"],
-            features: ["대용량 검색 처리", "실시간 인덱싱", "검색 성능 최적화", "모니터링 대시보드"]
-          },
-          {
-            id: 2,
-            title: "자체 검색엔진 개발",
-            body: "Lucene 기반의 자체 검색엔진을 개발하여 특정 도메인에 최적화된 검색 서비스를 제공합니다.",
-            startDate: "20220601",  // YYYYMMDD 형식
-            endDate: "20230228",    // YYYYMMDD 형식
-            role: "검색엔진 개발",
-            stack: ["Lucene", "Java", "Spring", "MySQL", "Maven"],
-            features: ["커스텀 랭킹 알고리즘", "도메인 특화 검색", "검색 품질 평가", "성능 튜닝"]
-          }
-        ];
-        setProjects(initialProjects);
-      }
-    };
-
-    loadProjects();
+    loadProjects(1); // 초기 페이지는 1
 
     return () => {
       abortController.abort(); // 컴포넌트 언마운트 시 요청 중단
     };
   }, []);
 
-  // 프로젝트 목록 로드
-  const loadProjects = async () => {
+  // 프로젝트 목록 로드 (페이지 파라미터 추가)
+  const loadProjects = async (page = 1) => {
     try {
         const params = {
             query: '',
             startDate: '',
-            endDate: ''
+            endDate: '',
+            page: page,
+            size: 6
         }
 
       const data = await searchProjects(params);
       setProjects(data.data.result);
+      setPageInfo(data.data.page);
+
     } catch (error) {
       console.error('프로젝트 로드 실패:', error);
       // 에러 시 기본 데이터 사용
@@ -109,6 +78,13 @@ const AdminPage = () => {
       setProjects(initialProjects);
     }
   };
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (newPage) => {
+    loadProjects(newPage);
+  };
+
+  // Pagination 컴포넌트 제거 (별도 파일로 분리됨)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -152,7 +128,7 @@ const AdminPage = () => {
       // 새 프로젝트 추가
       const status = await createProject(projectData);
       console.log('status : ', status);
-      setIsAddingProject(false);
+      // setIsAddingProject(false);
       
       if(status.status === "success"){
         alert('프로젝트 저장에 성공했습니다.');
@@ -440,6 +416,12 @@ const AdminPage = () => {
               </div>
             ))}
           </div>
+          
+          {/* Pagination 컴포넌트 사용 */}
+          <Pagination 
+            pageInfo={pageInfo} 
+            onPageChange={handlePageChange} 
+          />
         </div>
       </div>
     </div>
