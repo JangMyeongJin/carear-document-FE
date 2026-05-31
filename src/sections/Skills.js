@@ -7,7 +7,7 @@ const Skills = () => {
       category: "Search Engines",
       skills: [
         { name: "Elasticsearch", level: 85 },
-        { name: "OpenSearch", level: 80 },
+        { name: "OpenSearch", level: 85 },
       ],
     },
     {
@@ -22,7 +22,7 @@ const Skills = () => {
     {
       category: "Frontend",
       skills: [
-        { name: "React", level: 85 },
+        { name: "React", level: 80 },
         { name: "HTML5/CSS", level: 80 },
       ],
     },
@@ -47,10 +47,9 @@ const Skills = () => {
     {
       category: "Other",
       skills: [
-        { name: "Docker", level: 80 },
         { name: "Apache Airflow", level: 80 },
         { name: "Git", level: 80 },
-        { name: "Jenkins", level: 75 },
+        { name: "Docker", level: 70 },
       ],
     },
   ];
@@ -90,11 +89,11 @@ const Skills = () => {
         <div className="additional-skills">
           <h3>추가 전문 기술</h3>
           <div className="skill-tags">
-            <span className="skill-tag">랭킹 시스템</span>
-            <span className="skill-tag">검색 최적화</span>
-            <span className="skill-tag">검색 성능 튜닝</span>
-            <span className="skill-tag">검색 API 설계</span>
-            <span className="skill-tag">검색 시스템 아키텍처</span>
+            <span className="skill-tag">검색 아키텍처 설계</span>
+            <span className="skill-tag">키워드 기반 랭킹 시스템</span>
+            <span className="skill-tag">OpenSearch Vector 검색</span>
+            <span className="skill-tag">LLM 연계 RAG 서비스 개발</span>
+            <span className="skill-tag">데이터 파이프라인 설계 및 구축</span>
           </div>
         </div>
       </div>
