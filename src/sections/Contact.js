@@ -21,10 +21,10 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // 빈 값 검증
     const emptyFields = [];
-    
+
     if (!formData.name.trim()) {
       emptyFields.push("이름");
     }
@@ -37,20 +37,20 @@ const Contact = () => {
     if (!formData.content.trim()) {
       emptyFields.push("메시지");
     }
-    
+
     // 빈 값이 있으면 알림 표시
     if (emptyFields.length > 0) {
       alert(`다음 필드를 입력해주세요: ${emptyFields.join(", ")}`);
       return;
     }
-    
+
     // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       alert("올바른 이메일 형식을 입력해주세요.");
       return;
     }
-    
+
     setIsSubmitting(true);
 
     // 실제 폼 제출 로직을 여기에 구현
@@ -58,9 +58,9 @@ const Contact = () => {
       const response = await sendMail(formData);
 
       if (response.status === "success") {
-        alert("메시지가 성공적으로 전송되었습니다!");
+        alert("메일이 성공적으로 전송되었습니다!");
       } else {
-        alert("메시지 전송에 실패했습니다.");
+        alert("메일 전송에 실패했습니다.");
       }
 
       setFormData({ name: "", email: "", title: "", content: "" });
@@ -74,7 +74,7 @@ const Contact = () => {
       title: "이메일",
       value: "jean971013568@gmail.com",
       link: "mailto:jean971013568@gmail.com",
-    },    
+    },
     {
       icon: "🐙",
       title: "Github",
@@ -100,9 +100,7 @@ const Contact = () => {
         <div className="contact-content">
           <div className="contact-info">
             <h3>소셜 미디어</h3>
-            <p>
-              검색 관련 프로젝트 문의나 기술 협업 제안을 환영합니다!
-            </p>
+            <p>검색 관련 프로젝트 문의나 기술 협업 제안을 환영합니다!</p>
 
             <div className="contact-items">
               {contactInfo.map((info, index) => (
@@ -128,7 +126,7 @@ const Contact = () => {
           </div>
 
           <div className="contact-form">
-            <h3>메시지 보내기</h3>
+            <h3>메일 보내기</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="name">이름 *</label>
@@ -170,7 +168,7 @@ const Contact = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="message">메시지 *</label>
+                <label htmlFor="message">내용 *</label>
                 <textarea
                   id="content"
                   name="content"
@@ -178,7 +176,7 @@ const Contact = () => {
                   onChange={handleChange}
                   required
                   rows="5"
-                  placeholder="검색엔진 관련 프로젝트나 협업에 대해 메시지를 남겨주세요"
+                  placeholder="검색엔진 관련 프로젝트나 협업에 대해 메일을 남겨주세요"
                 ></textarea>
               </div>
 
@@ -187,7 +185,7 @@ const Contact = () => {
                 className="submit-btn"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "전송 중..." : "메시지 보내기"}
+                {isSubmitting ? "전송 중..." : "메일 보내기"}
               </button>
             </form>
           </div>

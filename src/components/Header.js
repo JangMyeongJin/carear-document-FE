@@ -3,7 +3,6 @@ import "./Header.css";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,7 +18,6 @@ const Header = () => {
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
-    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -29,7 +27,7 @@ const Header = () => {
           <h2>MY Career</h2>
         </div>
 
-        <nav className={`nav ${isMobileMenuOpen ? "mobile-open" : ""}`}>
+        <nav className="nav">
           <ul className="nav-list">
             <li>
               <button onClick={() => scrollToSection("experience")}>
@@ -56,15 +54,6 @@ const Header = () => {
             </li>
           </ul>
         </nav>
-
-        <button
-          className={`mobile-menu-btn ${isMobileMenuOpen ? "open" : ""}`}
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
       </div>
     </header>
   );

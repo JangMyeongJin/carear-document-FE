@@ -1,7 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import "./Experience.css";
 
 const Experience = () => {
+  const [expandedItems, setExpandedItems] = useState({});
+
+  const toggleItem = (expId, idx) => {
+    const key = `${expId}-${idx}`;
+    setExpandedItems((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   const experiences = [
     {
       id: 1,
@@ -11,8 +21,28 @@ const Experience = () => {
       startDate: "2025-05",
       endDate: "현재",
       description: [
-        "사내 최초 OpenSearch 기반 검색 플랫폼 구축 및 검색 기능 표준화",
-        "OpenSearch 기반 데이터 수집,색인 파이프라인 아키텍처 설계 및 구축",
+        {
+          title:
+            "사내 최초 OpenSearch 기반 검색 플랫폼 구축 및 검색 기능 표준화",
+          details: [
+            "프로젝트별 상이한 검색 코드를 공통 검색 프레임워크로 통합하여 유지보수 효율 개선",
+            "인덱스 설정 외부화를 통해 프로젝트별 재사용 가능한 검색 구조 설계",
+            "SI 환경에 최적화된 확장형 검색 아키텍처 구축",
+            "인기검색어, 최근검색어 개인화 기능 기획 및 개발로 사용자 검색 경험 개선",
+            "Index template, ISM, Alias 기능을 활용해 검색어 로그 인덱스 운영 자동화 및 최적화",
+            "검색어 특성에 따라 Nori tokenizer, ICU tokenizer를 분리 적용하여 한글 및 다국어 검색 품질 향상",
+          ],
+        },
+        {
+          title:
+            "OpenSearch 기반 데이터 수집,색인 파이프라인 아키텍처 설계 및 구축",
+          details: [
+            "PostgreSQL 메타데이터 색인 및 검색 로그 기반 인기검색어 집계 파이프라인 개발",
+            "DB 테이블 간 유사도 추출 파이프라인 개발",
+            "동적 task 기반 확장형 DAG 구조 설계로 유지보수 효율성 개선",
+            "Airflow 미사용 환경에서는 Java 기반 DB 수집기와 Spring Batch 연동으로 대체 스케줄링 구조 개발",
+          ],
+        },
       ],
       technologies: [
         "OpenSearch",
@@ -34,9 +64,32 @@ const Experience = () => {
       startDate: "2021-12",
       endDate: "2025-04",
       description: [
-        "Elasticsearch 기반 검색 솔루션 개발",
-        "Spring Boot 기반 웹 서비스 개발",
-        "OpenSearch 기반 Vector 검색 솔루션 및 LLM 연동 AI 검색 기능 개발",
+        {
+          title: "Elasticsearch 기반 검색 솔루션 개발",
+          details: [
+            "검색 API 개발 및 인기 검색어, 자동완성, 검색 결과 통계 API가 포함된 솔루션 개발",
+            "검색 정확도 향상을 위해 가중치 설정 및 검색 랭킹 튜닝 적용",
+            "SI 프로젝트 중심으로 검색 기능 최적화 및 커스텀 개발 수행",
+          ],
+        },
+        {
+          title: "Spring Boot 기반 웹 서비스 개발",
+          details: [
+            "Spring Boot 기반 회사 홈페이지 및 솔루션 시연 웹페이지 개발",
+            "회사 홈페이지: 솔루션 소개자료 메일 전송 기능 개발",
+            "솔루션 시연 페이지: Vector 검색 솔루션 + LLM 연동 AI 검색 웹페이지 개발",
+          ],
+        },
+        {
+          title:
+            "OpenSearch 기반 Vector 검색 솔루션 및 LLM 연동 AI 검색 기능 개발",
+          details: [
+            "기존 키워드 기반 검색 솔루션을 개선하여 자연어 기반 Vector 검색 솔루션 개발",
+            "질문과 데이터를 Vector로 변환하여 문장 단위 검색이 가능하도록 구현",
+            "OpenSearch 기반으로 Vector 검색을 적용하고, 검색 후 정제된 데이터를 LLM과 연동",
+            "LLM 모델을 활용한 후처리를 통해 검색 결과의 정확도를 향상",
+          ],
+        },
       ],
       technologies: [
         "Elasticsearch",
@@ -109,10 +162,38 @@ const Experience = () => {
               <div className="card-content">
                 <div className="description">
                   <h5>주요 업무</h5>
-                  <ul>
-                    {exp.description.map((desc, idx) => (
-                      <li key={idx}>{desc}</li>
-                    ))}
+                  <ul className="description-list">
+                    {exp.description.map((item, idx) => {
+                      const key = `${exp.id}-${idx}`;
+                      const isOpen = expandedItems[key];
+
+                      return (
+                        <li
+                          key={idx}
+                          className={`description-item ${isOpen ? "open" : ""}`}
+                        >
+                          <button
+                            type="button"
+                            className="description-toggle"
+                            onClick={() => toggleItem(exp.id, idx)}
+                            aria-expanded={isOpen}
+                          >
+                            <span className="toggle-icon">
+                              {isOpen ? "▼" : "▶"}
+                            </span>
+                            {item.title}
+                          </button>
+
+                          {isOpen && item.details?.length > 0 && (
+                            <ul className="description-sublist">
+                              {item.details.map((detail, subIdx) => (
+                                <li key={subIdx}>{detail}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
 

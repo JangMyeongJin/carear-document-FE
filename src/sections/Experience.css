@@ -59,13 +59,7 @@
   border-radius: 20px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   border: 1px solid #f0f0f0;
-}
-
-.experience-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
 .card-header {
@@ -121,28 +115,61 @@
   margin-right: 0.5rem;
 }
 
-.description ul {
+.description-list {
   list-style: none;
   padding: 0;
   margin: 0 0 2rem 0;
 }
 
-.description li {
-  color: #34495e;
-  line-height: 1.8;
-  margin-bottom: 1rem;
-  padding-left: 2rem;
-  position: relative;
-  font-size: 1rem;
+.description-item {
+  margin-bottom: 0.75rem;
 }
 
-.description li::before {
-  content: "✓";
+.description-toggle {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0.5rem 0 0.5rem 2rem;
+  font-size: 1rem;
+  color: #34495e;
+  cursor: pointer;
+  position: relative;
+  line-height: 1.8;
+  font-family: inherit;
+}
+
+.description-toggle:hover {
+  color: #3498db;
+}
+
+.toggle-icon {
+  position: absolute;
+  left: 0;
+  color: #3498db;
+  font-size: 0.8rem;
+}
+
+.description-sublist {
+  list-style: none;
+  padding: 0.5rem 0 0 2.5rem;
+  margin: 0;
+}
+
+.description-sublist li {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 0.4rem;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.description-sublist li::before {
+  content: "•";
   position: absolute;
   left: 0;
   color: #27ae60;
-  font-weight: bold;
-  font-size: 1.1rem;
 }
 
 .tech-tags {
@@ -179,7 +206,7 @@
     align-self: flex-start;
   }
 
-  .description li {
+  .description-toggle {
     font-size: 0.95rem;
     line-height: 1.6;
   }

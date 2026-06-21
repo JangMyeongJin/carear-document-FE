@@ -1,5 +1,5 @@
 .hero {
-  min-height: 100vh;
+  min-height: 70vh;
   display: flex;
   align-items: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -22,7 +22,6 @@
 .hero-container {
   max-width: 1600px;
   margin: 0 auto;
-  padding: 0 2rem;
   position: relative;
   z-index: 1;
 }
@@ -200,6 +199,10 @@
   }
 }
 
+.hero-notice {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .hero-content {
     grid-template-columns: 1fr;
@@ -223,12 +226,21 @@
     justify-content: center;
   }
 
-  .profile-placeholder {
-    width: 200px;
-    height: 200px;
+  .hero-image,
+  .hero-scroll {
+    display: none;
   }
 
-  .profile-icon {
-    font-size: 5rem;
+  .hero-notice {
+    display: block;
+    position: absolute;
+    bottom: 1rem;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0 1rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: rgba(0, 255, 0);
   }
 }

@@ -68,6 +68,9 @@ const Hero = () => {
           </div>
         </div>
       </div>
+      <p className="hero-notice">
+        ※ 해당 웹페이지는 PC 환경에 최적화 되어있습니다.
+      </p>
     </section>
   );
 };
