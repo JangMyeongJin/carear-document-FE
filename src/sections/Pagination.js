@@ -1,118 +1,25 @@
-import React from "react";
 import "./Pagination.css";
-
-const Pagination = ({ pageInfo, onPageChange }) => {
-  const { page, totalPage } = pageInfo;
-  
+export default function Pagination({
+  pageInfo,
+  onPageChange,
+  disabled = false
+}) {
+  const {
+    page = 1,
+    totalPage = 0
+  } = pageInfo;
   if (totalPage <= 1) return null;
-
-  const pages = [];
-  const maxVisiblePages = 5;
-  
-  let startPage, endPage;
-  
-  // 현재 페이지가 앞쪽에 있을 때 (1~3페이지)
-  if (page <= 3) {
-    startPage = 1;
-    endPage = Math.min(maxVisiblePages, totalPage);
-  }
-  // 현재 페이지가 뒤쪽에 있을 때
-  else if (page >= totalPage - 2) {
-    startPage = Math.max(1, totalPage - maxVisiblePages + 1);
-    endPage = totalPage;
-  }
-  // 현재 페이지가 중간에 있을 때
-  else {
-    startPage = page - 2;
-    endPage = page + 2;
-  }
-
-  // 맨 처음 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 1일 때)
-  pages.push(
-    <button
-      key="first"
-      onClick={() => onPageChange(1)}
-      className={`page-btn ${page === 1 ? 'disabled' : ''}`}
-      disabled={page === 1}
-      title="맨 처음"
-    >
-      처음
-    </button>
-  );
-
-  // 이전 페이지 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 1일 때)
-  pages.push(
-    <button
-      key="prev"
-      onClick={() => onPageChange(page - 1)}
-      className={`page-btn ${page === 1 ? 'disabled' : ''}`}
-      disabled={page === 1}
-    >
-      이전
-    </button>
-  );
-
-  // 현재 페이지가 4 이상이고 totalPage가 5 이상일 때 앞에 "..." 추가
-  if (page >= 4 && totalPage >= 5) {
-    pages.push(
-      <span key="dots" className="page-dots">
-        ...
-      </span>
-    );
-  }
-
-  // 페이지 번호들
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(
-      <button
-        key={i}
-        onClick={() => onPageChange(i)}
-        className={`page-btn ${i === page ? 'active' : ''}`}
-      >
-        {i}
-      </button>
-    );
-  }
-
-  // 현재 페이지가 totalPage-3 이하이고 totalPage가 5 이상일 때 뒤에 "..." 추가
-  if (page <= totalPage - 3 && totalPage >= 5) {
-    pages.push(
-      <span key="dots" className="page-dots">
-        ...
-      </span>
-    );
-  }
-
-  // 다음 페이지 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 마지막 페이지일 때)
-  pages.push(
-    <button
-      key="next"
-      onClick={() => onPageChange(page + 1)}
-      className={`page-btn ${page === totalPage ? 'disabled' : ''}`}
-      disabled={page === totalPage}
-    >
-      다음
-    </button>
-  );
-
-  // 맨 끝 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 마지막 페이지일 때)
-  pages.push(
-    <button
-      key="last"
-      onClick={() => onPageChange(totalPage)}
-      className={`page-btn ${page === totalPage ? 'disabled' : ''}`}
-      disabled={page === totalPage}
-      title="맨 끝"
-    >
-      끝
-    </button>
-  );
-
-  return (
-    <div className="pagination">
-      {pages}
-    </div>
-  );
-};
-
-export default Pagination;
+  const start = Math.max(1, Math.min(page - 2, totalPage - 4));
+  const end = Math.min(totalPage, start + 4);
+  return <nav className="pagination" aria-label="프로젝트 페이지">
+    <button disabled={disabled || page <= 1} onClick={() => onPageChange(1)} aria-label="첫 페이지">처음</button>
+    <button disabled={disabled || page <= 1} onClick={() => onPageChange(page - 1)}>이전</button>
+    {start > 1 && <span aria-hidden="true">…</span>}
+    {Array.from({
+      length: end - start + 1
+    }, (_, index) => start + index).map(number => <button key={number} aria-current={page === number ? "page" : undefined} aria-label={number + "페이지"} disabled={disabled} onClick={() => onPageChange(number)}>{number}</button>)}
+    {end < totalPage && <span aria-hidden="true">…</span>}
+    <button disabled={disabled || page >= totalPage} onClick={() => onPageChange(page + 1)}>다음</button>
+    <button disabled={disabled || page >= totalPage} onClick={() => onPageChange(totalPage)} aria-label="마지막 페이지">끝</button>
+  </nav>;
+}

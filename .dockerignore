@@ -1,0 +1,17 @@
+# 의존성·빌드 산출물 (가장 중요)
+node_modules
+build
+coverage
+
+.env
+.git
+.gitignore
+
+# 문서·도커 설정
+README.md
+Dockerfile
+
+# IDE
+.vscode
+.idea
+.cursor

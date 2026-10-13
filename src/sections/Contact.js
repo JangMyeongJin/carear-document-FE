@@ -1,198 +1,69 @@
-import React, { useState } from "react";
-import "./Contact.css";
+import { useState } from "react";
 import { sendMail } from "../apis/mail/mailApi";
-
-const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    title: "",
-    content: "",
-  });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // 빈 값 검증
-    const emptyFields = [];
-
-    if (!formData.name.trim()) {
-      emptyFields.push("이름");
-    }
-    if (!formData.email.trim()) {
-      emptyFields.push("이메일");
-    }
-    if (!formData.title.trim()) {
-      emptyFields.push("제목");
-    }
-    if (!formData.content.trim()) {
-      emptyFields.push("메시지");
-    }
-
-    // 빈 값이 있으면 알림 표시
-    if (emptyFields.length > 0) {
-      alert(`다음 필드를 입력해주세요: ${emptyFields.join(", ")}`);
-      return;
-    }
-
-    // 이메일 형식 검증
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      alert("올바른 이메일 형식을 입력해주세요.");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    // 실제 폼 제출 로직을 여기에 구현
-    setTimeout(async () => {
-      const response = await sendMail(formData);
-
-      if (response.status === "success") {
-        alert("메일이 성공적으로 전송되었습니다!");
-      } else {
-        alert("메일 전송에 실패했습니다.");
-      }
-
-      setFormData({ name: "", email: "", title: "", content: "" });
-      setIsSubmitting(false);
-    }, 1000);
-  };
-
-  const contactInfo = [
-    {
-      icon: "📧",
-      title: "이메일",
-      value: "jean971013568@gmail.com",
-      link: "mailto:jean971013568@gmail.com",
-    },
-    {
-      icon: "🐙",
-      title: "Github",
-      value: "https://github.com/JangMyeongJin",
-      link: "https://github.com/JangMyeongJin",
-    },
-    {
-      icon: "🌐",
-      title: "Blog",
-      value: "https://web-developer1.tistory.com/",
-      link: "https://web-developer1.tistory.com/",
-    },
-  ];
-
-  return (
-    <section className="contact" id="contact">
-      <div className="container">
-        <div className="section-header">
-          <h2>Contact Me</h2>
-          <p>검색엔진 프로젝트나 기술 협업에 대해 이야기해보세요</p>
-        </div>
-
-        <div className="contact-content">
-          <div className="contact-info">
-            <h3>소셜 미디어</h3>
-            <p>검색 관련 프로젝트 문의나 기술 협업 제안을 환영합니다!</p>
-
-            <div className="contact-items">
-              {contactInfo.map((info, index) => (
-                <div key={index} className="contact-item">
-                  <div className="contact-icon">{info.icon}</div>
-                  <div className="contact-details">
-                    <h4>{info.title}</h4>
-                    {info.link ? (
-                      <a
-                        href={info.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {info.value}
-                      </a>
-                    ) : (
-                      <span>{info.value}</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="contact-form">
-            <h3>메일 보내기</h3>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="name">이름 *</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  placeholder="이름을 입력하세요"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="email">이메일 *</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  placeholder="이메일을 입력하세요"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="subject">제목 *</label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                  placeholder="제목을 입력하세요"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="message">내용 *</label>
-                <textarea
-                  id="content"
-                  name="content"
-                  value={formData.content}
-                  onChange={handleChange}
-                  required
-                  rows="5"
-                  placeholder="검색엔진 관련 프로젝트나 협업에 대해 메일을 남겨주세요"
-                ></textarea>
-              </div>
-
-              <button
-                type="submit"
-                className="submit-btn"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "전송 중..." : "메일 보내기"}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+import SectionHeading from "../components/SectionHeading";
+import "./Contact.css";
+const emptyForm = {
+  name: "",
+  email: "",
+  title: "",
+  content: ""
 };
-
-export default Contact;
+export default function Contact() {
+  const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState(null);
+  const submit = async event => {
+    event.preventDefault();
+    if (submitting) return;
+    const nextErrors = {};
+    Object.entries(form).forEach(([field, value]) => {
+      if (!value.trim()) nextErrors[field] = "내용을 입력해주세요.";
+    });
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) nextErrors.email = "올바른 이메일 주소를 입력해주세요.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
+      document.getElementById("contact-" + Object.keys(nextErrors)[0])?.focus();
+      return;
+    }
+    setSubmitting(true);
+    setStatus(null);
+    try {
+      const response = await sendMail(form);
+      if (response.status !== "success") throw new Error("전송 실패");
+      setStatus({
+        success: true,
+        message: "메시지를 전송했습니다. 연락 주셔서 감사합니다."
+      });
+      setForm(emptyForm);
+    } catch {
+      setStatus({
+        success: false,
+        message: "메시지를 전송하지 못했습니다. 작성 내용은 보관되어 있습니다. 다시 시도하거나 이메일로 연락해주세요."
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  return <section className="contact" id="contact"><div className="container">
+    <SectionHeading number="04" title="Contact">다음 이야기를<br />함께 만들어볼까요?</SectionHeading>
+    <div className="contact-content"><div className="contact-info"><p className="editorial-serif">Let's connect.</p><p>검색엔진 프로젝트나 기술 협업에 대해 이야기해보세요.<br />검색 관련 프로젝트 문의와 기술 협업 제안을 환영합니다.</p><div className="contact-links"><a href="mailto:jean971013568@gmail.com">jean971013568@gmail.com <span aria-hidden="true">↗</span></a><a href="https://github.com/JangMyeongJin" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a><a href="https://web-developer1.tistory.com/" target="_blank" rel="noopener noreferrer">Blog <span aria-hidden="true">↗</span></a></div></div>
+    <form className="contact-form" onSubmit={submit} noValidate aria-busy={submitting}>
+      <p className="form-caption">메일 보내기 / 모든 항목은 필수입니다.</p>
+      {Object.entries({
+            name: "이름",
+            email: "이메일",
+            title: "제목",
+            content: "내용"
+          }).map(([field, label]) => <div className="form-group" key={field}><label htmlFor={"contact-" + field}>{label}</label>{field === "content" ? <textarea id={"contact-" + field} name={field} rows="5" required value={form[field]} disabled={submitting} aria-invalid={!!errors[field]} aria-describedby={errors[field] ? field + "-error" : undefined} onChange={event => setForm({
+              ...form,
+              [field]: event.target.value
+            })} placeholder="프로젝트나 협업에 대해 남겨주세요." /> : <input id={"contact-" + field} name={field} type={field === "email" ? "email" : "text"} autoComplete={field === "name" ? "name" : field === "email" ? "email" : undefined} required value={form[field]} disabled={submitting} aria-invalid={!!errors[field]} aria-describedby={errors[field] ? field + "-error" : undefined} onChange={event => setForm({
+              ...form,
+              [field]: event.target.value
+            })} />}{errors[field] && <p className="field-error" id={field + "-error"}>{errors[field]}</p>}</div>)}
+      <button className="btn btn-primary" disabled={submitting} type="submit">{submitting ? "전송 중…" : "메시지 보내기 ↗"}</button>
+      {status && <p role={status.success ? "status" : "alert"} className={status.success ? "status-message" : "status-message error"}>{status.message}</p>}
+    </form></div>
+  </div></section>;
+}

@@ -1,509 +1,195 @@
-import React, { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { searchProjects, createProject, deleteProject } from "../apis/search/project/projectApi";
+import Pagination from "../sections/Pagination";
 import "./AdminPage.css";
-import {
-  searchProjects,
-  createProject,
-  deleteProject,
-} from "../apis/search/project/projectApi";
-import Pagination from "../sections/Pagination"; // Pagination 컴포넌트 import
-
-const toApiMonth = (value) => (value ? value.replace("-", "") : "");
-
-const toInputMonth = (value) => {
-  if (!value) return "";
-  if (value.includes("-")) return value.substring(0, 7);
-  if (value.length >= 6) {
-    return `${value.substring(0, 4)}-${value.substring(4, 6)}`;
-  }
-  return value;
+const emptyForm = {
+  id: "",
+  title: "",
+  startDate: "",
+  endDate: "",
+  role: "",
+  stack: "",
+  description: "",
+  body: "",
+  features: "",
+  important: "N"
 };
-
-const AdminPage = () => {
+const inputMonth = value => String(value || "").replace(/^(\d{4})(\d{2}).*$/, "$1-$2").slice(0, 7);
+const fields = {
+  title: "제목",
+  startDate: "시작 월",
+  endDate: "종료 월",
+  role: "참여 역할",
+  stack: "기술 스택 (공백으로 구분)",
+  description: "프로젝트 개요",
+  body: "업무 내용 (|로 구분)",
+  features: "성과 (|로 구분)",
+  important: "중요도"
+};
+const items = value => Array.isArray(value) ? value : String(value || "").split("|").map(item => item.trim()).filter(Boolean);
+export default function AdminPage() {
   const [projects, setProjects] = useState([]);
-  const [editingProject, setEditingProject] = useState(null);
-  const [isAddingProject, setIsAddingProject] = useState(false);
-  const [formData, setFormData] = useState({
-    id: "",
-    title: "",
-    startDate: "",
-    endDate: "",
-    role: "",
-    stack: "",
-    body: "",
-    features: "",
-    important: "N",
-  });
   const [pageInfo, setPageInfo] = useState({
-    page: 0,
-    size: 0,
+    page: 1,
     totalPage: 0,
-    totalCount: 0,
+    totalCount: 0
   });
-
-  // 초기 프로젝트 데이터 로드
+  const [page, setPage] = useState(1);
+  const [retry, setRetry] = useState(0);
+  const [form, setForm] = useState(emptyForm);
+  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState(null);
+  const [loadError, setLoadError] = useState("");
+  const formHeading = useRef(null);
+  const mounted = useRef(false);
+  const operationLock = useRef(false);
   useEffect(() => {
-    const abortController = new AbortController();
-
-    loadProjects(1); // 초기 페이지는 1
-
+    mounted.current = true;
     return () => {
-      abortController.abort(); // 컴포넌트 언마운트 시 요청 중단
+      mounted.current = false;
     };
   }, []);
-
-  // 프로젝트 목록 로드 (페이지 파라미터 추가)
-  const loadProjects = async (page = 1) => {
+  useEffect(() => {
+    if (editing) formHeading.current?.focus();
+  }, [editing]);
+  const load = useCallback(async signal => {
+    setLoading(true);
+    setLoadError("");
     try {
-      const params = {
+      const response = await searchProjects({
         query: "",
         startDate: "",
         endDate: "",
-        page: page,
         filter: "",
-        size: 6,
-      };
-
-      const data = await searchProjects(params);
-      setProjects(data.data.result);
-      setPageInfo(data.data.page);
-    } catch (error) {
-      console.error("프로젝트 로드 실패:", error);
-      // 에러 시 기본 데이터 사용
-      const initialProjects = [
-        {
-          id: 1,
-          title: "대용량 검색 플랫폼",
-          body: "일일 100만 건 이상의 검색 요청을 처리하는 대용량 검색 플랫폼입니다. Elasticsearch 기반으로 구축되어 높은 성능과 확장성을 제공합니다.",
-          startDate: "202303", // YYYYMM 형식
-          endDate: "202312", // YYYYMM 형식
-          role: "백엔드 개발",
-          stack: ["Elasticsearch", "Java", "Kafka", "Redis", "Docker"],
-          features: [
-            "대용량 검색 처리",
-            "실시간 인덱싱",
-            "검색 성능 최적화",
-            "모니터링 대시보드",
-          ],
-        },
-        {
-          id: 2,
-          title: "자체 검색엔진 개발",
-          body: "Lucene 기반의 자체 검색엔진을 개발하여 특정 도메인에 최적화된 검색 서비스를 제공합니다.",
-          startDate: "202206", // YYYYMM 형식
-          endDate: "202302", // YYYYMM 형식
-          role: "검색엔진 개발",
-          stack: ["Lucene", "Java", "Spring", "MySQL", "Maven"],
-          features: [
-            "커스텀 랭킹 알고리즘",
-            "도메인 특화 검색",
-            "검색 품질 평가",
-            "성능 튜닝",
-          ],
-        },
-      ];
-      setProjects(initialProjects);
+        page,
+        size: 6
+      }, {
+        signal
+      });
+      if (signal.aborted) return;
+      if (response.status !== "success" || !Array.isArray(response.data?.result)) throw new Error("목록 실패");
+      setProjects(response.data.result);
+      setPageInfo(response.data.page);
+    } catch {
+      if (!signal.aborted) setLoadError("프로젝트를 불러오지 못했습니다. 다시 시도해주세요.");
+    } finally {
+      if (!signal.aborted) setLoading(false);
     }
+  }, [page]);
+  useEffect(() => {
+    const controller = new AbortController();
+    load(controller.signal);
+    return () => controller.abort();
+  }, [load, retry]);
+  const startEdit = project => {
+    setForm({
+      ...emptyForm,
+      ...project,
+      id: project.id || "",
+      startDate: inputMonth(project.startDate),
+      endDate: inputMonth(project.endDate),
+      stack: Array.isArray(project.stack) ? project.stack.join(" ") : project.stack || "",
+      body: items(project.body).join(" | "),
+      features: items(project.features).join(" | "),
+      description: project.description || "",
+      important: project.important === "Y" ? "Y" : "N"
+    });
+    setEditing(true);
+    setStatus(null);
   };
-
-  // 페이지 변경 핸들러
-  const handlePageChange = (newPage) => {
-    loadProjects(newPage);
-  };
-
-  // Pagination 컴포넌트 제거 (별도 파일로 분리됨)
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    let projectData;
-
-    if (formData.id === "") {
-      projectData = {
-        title: formData.title,
-        startDate: toApiMonth(formData.startDate),
-        endDate: toApiMonth(formData.endDate),
-        role: formData.role,
-        stack: formData.stack,
-        body: formData.body,
-        features: formData.features,
-        important: formData.important,
-      };
-    } else {
-      projectData = {
-        id: formData.id,
-        title: formData.title,
-        startDate: toApiMonth(formData.startDate),
-        endDate: toApiMonth(formData.endDate),
-        role: formData.role,
-        stack: formData.stack,
-        body: formData.body,
-        features: formData.features,
-        important: formData.important,
-      };
+  const save = async event => {
+    event.preventDefault();
+    if (operationLock.current) return;
+    if (form.startDate > form.endDate) {
+      setStatus({
+        error: true,
+        message: "종료 월은 시작 월 이후로 선택해주세요."
+      });
+      return;
     }
-
+    operationLock.current = true;
+    setBusy(true);
+    setStatus(null);
+    const payload = Object.fromEntries(Object.keys(emptyForm).map(key => [key, form[key]]));
+    payload.startDate = form.startDate.replace("-", "");
+    payload.endDate = form.endDate.replace("-", "");
+    if (!payload.id) delete payload.id;
     try {
-      console.log("projectData : ", projectData);
-
-      // 새 프로젝트 추가
-      const status = await createProject(projectData);
-
-      if (status.status === "success") {
-        alert("프로젝트 저장에 성공했습니다.");
-        // 성공 시에만 폼 초기화
-        setFormData({
-          id: "",
-          title: "",
-          startDate: "",
-          endDate: "",
-          role: "",
-          stack: "",
-          body: "",
-          features: "",
-          important: "N",
-        });
-        loadProjects();
-      } else {
-        alert("프로젝트 저장장에 실패했습니다.");
-      }
-    } catch (error) {
-      console.error("프로젝트 저장 실패:", error);
-      alert("프로젝트 저장에 실패했습니다.");
-      // 에러 발생 시 폼을 그대로 유지 (editingProject와 isAddingProject 상태 유지)
+      const response = await createProject(payload);
+      if (response.status !== "success") throw new Error("저장 실패");
+      if (!mounted.current) return;
+      setStatus({
+        error: false,
+        message: "프로젝트를 저장했습니다."
+      });
+      setEditing(false);
+      setForm(emptyForm);
+      setRetry(value => value + 1);
+    } catch {
+      if (mounted.current) setStatus({
+        error: true,
+        message: "저장하지 못했습니다. 입력 내용을 유지했습니다. 다시 시도해주세요."
+      });
+    } finally {
+      operationLock.current = false;
+      if (mounted.current) setBusy(false);
     }
   };
-
-  const handleEdit = (project) => {
-    setEditingProject(project);
-    setFormData({
-      id: project.id,
-      title: project.title,
-      startDate: toInputMonth(project.startDate),
-      endDate: toInputMonth(project.endDate),
-      role: project.role,
-      stack: Array.isArray(project.stack)
-        ? project.stack.join(" ")
-        : project.stack,
-      body: Array.isArray(project.body)
-        ? project.body.join(" | ")
-        : project.body,
-      features: Array.isArray(project.features)
-        ? project.features.join(" | ")
-        : project.features, // 파이프라인으로 구분
-      important: project.important === "Y" ? "Y" : "N",
-    });
-  };
-
-  const handleDelete = async (projectId) => {
-    if (window.confirm("정말로 이 프로젝트를 삭제하시겠습니까?")) {
-      try {
-        await deleteProject(projectId);
-        setProjects((prev) =>
-          prev.filter((project) => project.id !== projectId),
-        );
-      } catch (error) {
-        console.error("프로젝트 삭제 실패:", error);
-        alert("프로젝트 삭제에 실패했습니다.");
-      }
+  const remove = async id => {
+    if (operationLock.current || !window.confirm("정말로 이 프로젝트를 삭제하시겠습니까?")) return;
+    operationLock.current = true;
+    setBusy(true);
+    setStatus(null);
+    try {
+      const response = await deleteProject(id);
+      if (response.status !== "success") throw new Error("삭제 실패");
+      if (!mounted.current) return;
+      setStatus({
+        error: false,
+        message: "프로젝트를 삭제했습니다."
+      });
+      if (projects.length === 1 && page > 1) setPage(page - 1);else setRetry(value => value + 1);
+    } catch {
+      if (mounted.current) setStatus({
+        error: true,
+        message: "삭제하지 못했습니다. 프로젝트는 목록에 유지됩니다."
+      });
+    } finally {
+      operationLock.current = false;
+      if (mounted.current) setBusy(false);
     }
   };
-
-  const handleCancel = () => {
-    setEditingProject(null);
-    setIsAddingProject(false);
-    setFormData({
-      id: "",
-      title: "",
-      startDate: "",
-      endDate: "",
-      role: "",
-      stack: "",
-      body: "",
-      features: "",
-      important: "N",
-    });
-  };
-
-  // period를 startDate와 endDate로 변환하는 함수
-  const formatPeriod = (startDate, endDate) => {
-    if (!startDate || !endDate) return "";
-
-    const formatDate = (dateString) => {
-      // YYYYMM 형식 처리
-      if (typeof dateString === "string" && dateString.length === 6) {
-        const year = dateString.substring(0, 4);
-        const month = dateString.substring(4, 6);
-        return `${year}.${month}`;
-      }
-
-      // YYYYMMDD 형식 처리
-      if (typeof dateString === "string" && dateString.length === 8) {
-        const year = dateString.substring(0, 4);
-        const month = dateString.substring(4, 6);
-        const day = dateString.substring(6, 8);
-        return `${year}.${month}.${day}`;
-      }
-
-      // ISO 형식 처리 (YYYY-MM-DD)
-      if (typeof dateString === "string" && dateString.includes("-")) {
-        const date = new Date(dateString);
-        return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}`;
-      }
-
-      // Date 객체 처리
-      if (dateString instanceof Date) {
-        return `${dateString.getFullYear()}.${String(dateString.getMonth() + 1).padStart(2, "0")}`;
-      }
-
-      // 기타 형식은 그대로 반환
-      return dateString;
-    };
-
-    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-  };
-
-  return (
-    <div className="admin-page">
-      <div className="admin-container">
-        <header className="admin-header">
-          <h1>프로젝트 관리</h1>
-          <button
-            className="add-project-btn"
-            onClick={() => setIsAddingProject(true)}
-          >
-            새 프로젝트 추가
-          </button>
-        </header>
-
-        {/* 프로젝트 추가/수정 폼 */}
-        {(isAddingProject || editingProject) && (
-          <div className="project-form-container">
-            <h2>{editingProject ? "프로젝트 수정" : "새 프로젝트 추가"}</h2>
-            <form onSubmit={handleSubmit} className="project-form">
-              <div className="form-group">
-                <label>제목:</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>중요도:</label>
-                <select
-                  name="important"
-                  value={formData.important}
-                  onChange={handleInputChange}
-                >
-                  <option value="N">보통</option>
-                  <option value="Y">중요</option>
-                </select>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>시작 월:</label>
-                  <input
-                    type="month"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>종료 월:</label>
-                  <input
-                    type="month"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>참여역할:</label>
-                <input
-                  type="text"
-                  name="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  placeholder="백엔드 개발"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>기술 스택 (공백으로 구분):</label>
-                <input
-                  type="text"
-                  name="stack"
-                  value={formData.stack}
-                  onChange={handleInputChange}
-                  placeholder="Java Spring MySQL"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>업무내용 (|로 구분)</label>
-                <input
-                  type="text"
-                  name="body"
-                  value={formData.body}
-                  onChange={handleInputChange}
-                  placeholder="업무내용1 | 업무내용2 | 업무내용3"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>성과 (|로 구분)</label>
-                <input
-                  type="text"
-                  name="features"
-                  value={formData.features}
-                  onChange={handleInputChange}
-                  placeholder="성과1 | 성과2 | 성과3"
-                />
-              </div>
-
-              <div className="form-actions">
-                <button type="submit" className="save-btn">
-                  {editingProject ? "수정" : "추가"}
-                </button>
-                <button
-                  type="button"
-                  className="cancel-btn"
-                  onClick={handleCancel}
-                >
-                  취소
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* 프로젝트 목록 */}
-        <div className="projects-list">
-          <h2>프로젝트 목록</h2>
-          <div className="projects-grid">
-            {projects.map((project) => (
-              <div key={project.id} className="project-card">
-                <div className="project-buttons">
-                  <div className="project-actions">
-                    <button
-                      className="edit-btn"
-                      onClick={() => handleEdit(project)}
-                    >
-                      수정
-                    </button>
-                    <button
-                      className="delete-btn"
-                      onClick={() => handleDelete(project.id)}
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </div>
-                <div className="project-info">
-                  <div className="project-title-row">
-                    <h3>{project.title}</h3>
-                    {project.important === "Y" && (
-                      <span
-                        className="important-star"
-                        title="중요 프로젝트"
-                        aria-label="중요"
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                          aria-hidden="true"
-                        >
-                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="project-details">
-                  <div className="project-period">
-                    {formatPeriod(project.startDate, project.endDate)}
-                  </div>
-                  {project.role?.split("|")?.map((rolePart, index) => (
-                    <div key={index} className="project-role">
-                      {rolePart.trim()}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="project-work-content">
-                  <strong>업무내용</strong>
-                  <ul>
-                    {Array.isArray(project.body)
-                      ? project.body.map((content, index) => (
-                          <li key={index}>{content}</li>
-                        ))
-                      : project.body?.split("|")?.map(
-                          (
-                            content,
-                            index, // 파이프라인으로 구분
-                          ) => <li key={index}>{content.trim()}</li>,
-                        )}
-                  </ul>
-                </div>
-                <div className="project-features">
-                  <strong>주요 성과</strong>
-                  <ul>
-                    {Array.isArray(project.features)
-                      ? project.features.map((feature, index) => (
-                          <li key={index}>{feature}</li>
-                        ))
-                      : project.features?.split("|")?.map(
-                          (
-                            feature,
-                            index, // 파이프라인으로 구분
-                          ) => <li key={index}>{feature.trim()}</li>,
-                        )}
-                  </ul>
-                </div>
-                <div className="project-technologies">
-                  {Array.isArray(project.stack)
-                    ? project.stack.map((tech, index) => (
-                        <span key={index} className="tech-tag">
-                          {tech}
-                        </span>
-                      ))
-                    : project.stack?.split(" ")?.map((tech, index) => (
-                        <span key={index} className="tech-tag">
-                          {tech}
-                        </span>
-                      ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination 컴포넌트 사용 */}
-          <Pagination pageInfo={pageInfo} onPageChange={handlePageChange} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default AdminPage;
+  return <div className="admin-page"><div className="container">
+    <Link to="/" className="text-link">← 포트폴리오로 돌아가기</Link>
+    <header className="admin-header"><div><p className="eyebrow">WORKSPACE / PROJECTS</p><h1>프로젝트 관리.</h1></div><button className="btn btn-primary" disabled={busy} onClick={() => {
+          setForm(emptyForm);
+          setEditing(true);
+          setStatus(null);
+        }}>새 프로젝트 +</button></header>
+    <p role="status" className="admin-note">목록·등록·수정·삭제 / 프로젝트 정보를 관리합니다.</p>
+    {status && <p role={status.error ? "alert" : "status"} className={status.error ? "status-message error" : "status-message"}>{status.message}</p>}
+    {editing && <section className="admin-form-section"><h2 ref={formHeading} tabIndex="-1">{form.id ? "프로젝트 수정" : "새 프로젝트"}</h2><form className="admin-form" onSubmit={save} aria-busy={busy}>
+      {Object.entries(fields).map(([key, label]) => <div className={"form-group " + (["description", "body", "features"].includes(key) ? "full-width" : "")} key={key}><label htmlFor={"admin-" + key}>{label}</label>{key === "important" ? <select id={"admin-" + key} value={form[key]} disabled={busy} onChange={event => setForm({
+              ...form,
+              [key]: event.target.value
+            })}><option value="N">보통</option><option value="Y">중요</option></select> : ["description", "body", "features"].includes(key) ? <textarea id={"admin-" + key} rows="3" required={key === "body"} value={form[key]} disabled={busy} onChange={event => setForm({
+              ...form,
+              [key]: event.target.value
+            })} /> : <input id={"admin-" + key} type={key.includes("Date") ? "month" : "text"} required value={form[key]} disabled={busy} onChange={event => setForm({
+              ...form,
+              [key]: event.target.value
+            })} />}</div>)}
+      <div className="admin-form-actions full-width"><button className="btn btn-primary" disabled={busy} type="submit">{busy ? "처리 중…" : "프로젝트 저장 ↗"}</button><button className="btn" disabled={busy} type="button" onClick={() => {
+              setEditing(false);
+              setForm(emptyForm);
+            }}>취소</button></div>
+    </form></section>}
+    <section className="admin-projects" aria-busy={loading}><div className="admin-list-heading"><h2>프로젝트 목록</h2><span>{pageInfo.totalCount || 0}개</span></div>
+      {loadError ? <div role="alert" className="status-message error">{loadError} <button className="btn" onClick={() => setRetry(value => value + 1)}>다시 시도</button></div> : loading ? <p role="status" className="status-message">목록을 불러오는 중…</p> : projects.length ? projects.map(project => <article className="admin-project" key={project.id}><div><p className="eyebrow">{project.important === "Y" ? "SELECTED" : "PROJECT"} · {inputMonth(project.startDate)} — {inputMonth(project.endDate)}</p><h3>{project.title}</h3><p className="admin-role">{project.role}</p><details><summary>내용 살펴보기</summary>{[["개요", "description"], ["업무 내용", "body"], ["주요 성과", "features"]].map(([label, key]) => items(project[key]).length > 0 && <div key={key}><h4>{label}</h4><ul>{items(project[key]).map((item, i) => <li key={i}>{item}</li>)}</ul></div>)}<p>{Array.isArray(project.stack) ? project.stack.join(" · ") : project.stack}</p></details></div><div className="admin-actions"><button className="btn" disabled={busy} aria-label={project.title + " 수정"} onClick={() => startEdit(project)}>수정</button><button className="btn" disabled={busy} aria-label={project.title + " 삭제"} onClick={() => remove(project.id)}>삭제</button></div></article>) : <p className="status-message">등록된 프로젝트가 없습니다.</p>}
+      {!loadError && <Pagination pageInfo={pageInfo} disabled={loading || busy} onPageChange={setPage} />}
+    </section>
+  </div></div>;
+}

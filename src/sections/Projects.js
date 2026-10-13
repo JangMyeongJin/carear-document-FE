@@ -1,796 +1,236 @@
-import React, { useState, useEffect, useRef } from "react";
-import "./Projects.css";
-import {
-  searchProjects,
-  searchAggregationProject,
-} from "../apis/search/project/projectApi";
+import { useEffect, useState } from "react";
+import { searchProjects, searchAggregationProject } from "../apis/search/project/projectApi";
 import { searchAuto } from "../apis/search/auto/autoApi";
-
-const toApiMonth = (value) => (value ? value.replace("-", "") : "");
-
-const getFilterParam = (filter) => (filter === "Y" ? "Y" : "");
-
-const DEFAULT_SORT = "startDate/desc";
-
-const splitPipeField = (value) =>
-  value?.split("|")?.map((item) => item.trim()).filter(Boolean) || [];
-
-const getHighlightedPipeItems = (highlight, field, fallback) => {
-  if (highlight?.[field]?.length) {
-    return splitPipeField(highlight[field].join(" | "));
-  }
-  return splitPipeField(fallback);
+import SectionHeading from "../components/SectionHeading";
+import ProjectEntry from "../components/ProjectEntry";
+import Pagination from "./Pagination";
+import "./Projects.css";
+const initialCriteria = {
+  query: "",
+  startDate: "",
+  endDate: "",
+  filter: "",
+  sort: "startDate/desc",
+  page: 1,
+  size: 6
 };
-
-const renderHighlightHtml = (html) => (
-  <span dangerouslySetInnerHTML={{ __html: html }} />
-);
-
-const Projects = () => {
-  const [projects, setProjects] = useState([]);
-  const [aggregation, setAggregation] = useState([]);
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [projectFilter, setProjectFilter] = useState("Y");
-
-  // 날짜 검색 관련 상태 추가
+const toMonth = value => value.replace("-", "");
+export default function Projects() {
+  const [criteria, setCriteria] = useState(initialCriteria);
+  const [query, setQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [showDateFilter, setShowDateFilter] = useState(false);
-
-  // 기술 스택 필터 온오프 상태 추가
-  const [showStackFilter, setShowStackFilter] = useState(false);
-
-  // 자동완성 관련 상태 추가
-  const [autoResult, setAutoResult] = useState([]);
-  const [showAutoResult, setShowAutoResult] = useState(false);
-  const [selectedAutoIndex, setSelectedAutoIndex] = useState(-1);
-  const searchInputRef = useRef(null);
-  const autoResultRef = useRef(null);
-  const projectsSectionRef = useRef(null);
-
-  // 페이징 관련 정보 추가
+  const [stack, setStack] = useState("");
+  const [projects, setProjects] = useState([]);
   const [pageInfo, setPageInfo] = useState({
-    page: 0,
-    size: 0,
+    page: 1,
     totalPage: 0,
-    totalCount: 0,
+    totalCount: 0
   });
-
-  const loadProjects = async (page = 1) => {
-    try {
-      const params = {
-        query: "",
-        startDate: "",
-        endDate: "",
-        filter: getFilterParam(projectFilter),
-        sort: DEFAULT_SORT,
-        page: page,
-        size: 5,
-      };
-
-      const project = await searchProjects(params);
-      setProjects(project.data.result);
-      setPageInfo(project.data.page);
-    } catch (error) {
-      if (error.name === "AbortError") {
-        return; // 중단된 요청은 무시
-      }
-      console.error("프로젝트 로드 실패:", error);
-      // 에러 시 기본 데이터 사용
-      const initialProjects = [
-        {
-          id: 1,
-          title: "대용량 검색 플랫폼",
-          body: "일일 100만 건 이상의 검색 요청을 처리하는 대용량 검색 플랫폼입니다. Elasticsearch 기반으로 구축되어 높은 성능과 확장성을 제공합니다.",
-          startDate: "202303", // YYYYMM 형식
-          endDate: "202312", // YYYYMM 형식
-          role: "백엔드 개발",
-          stack: "Elasticsearch Java Kafka Redis Docker",
-          features:
-            "대용량 검색 처리|실시간 인덱싱|검색 성능 최적화|모니터링 대시보드",
-        },
-        {
-          id: 2,
-          title: "자체 검색엔진 개발",
-          body: "Lucene 기반의 자체 검색엔진을 개발하여 특정 도메인에 최적화된 검색 서비스를 제공합니다.",
-          startDate: "202206", // YYYYMM 형식
-          endDate: "202302", // YYYYMM 형식
-          role: "검색엔진 개발",
-          stack: "Lucene Java Spring MySQL Maven",
-          features:
-            "커스텀 랭킹 알고리즘|도메인 특화 검색|검색 품질 평가|성능 튜닝",
-        },
-      ];
-      setProjects(initialProjects);
-    }
-  };
-
-  const loadAggregation = async (filter = projectFilter) => {
-    try {
-      const params = {
-        query: "",
-        startDate: "",
-        endDate: "",
-        aggrField: "stack",
-        filter: getFilterParam(filter),
-        sort: DEFAULT_SORT,
-        page: 1,
-        size: 30,
-      };
-
-      const aggregation = await searchAggregationProject(params);
-      setAggregation(aggregation.data.result);
-    } catch (error) {
-      console.error("기술 스택 통계 실패:", error);
-    }
-  };
-
-  // 초기 프로젝트 데이터 로드
+  const [aggregation, setAggregation] = useState([]);
+  const [aggregationError, setAggregationError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [dateError, setDateError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const [suggestions, setSuggestions] = useState([]);
+  const [autoError, setAutoError] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selected, setSelected] = useState(-1);
   useEffect(() => {
-    const abortController = new AbortController();
-
-    loadProjects(1);
-    loadAggregation();
-
-    return () => {
-      abortController.abort(); // 컴포넌트 언마운트 시 요청 중단
-    };
-  }, []);
-
-  // 자동완성 제안 생성 함수
-  const generateSuggestions = async (input) => {
-    if (!input.trim()) {
-      setAutoResult([]);
-      return;
-    }
-
-    const inputLower = input.toLowerCase();
-
-    const params = {
-      query: inputLower,
-      size: 5,
-      page: 1,
-    };
-
-    const auto = await searchAuto(params);
-    const result = auto.data.result;
-
-    const allAutoResult = [];
-
-    let index = 0;
-    result.forEach((result) => {
-      allAutoResult.push({
-        word: result.word,
-        index: index,
-      });
-      index++;
+    const controller = new AbortController();
+    let active = true;
+    setLoading(true);
+    setError("");
+    searchProjects(criteria, {
+      signal: controller.signal
+    }).then(response => {
+      if (!active) return;
+      if (response.status !== "success" || !Array.isArray(response.data?.result)) throw new Error("검색 실패");
+      setProjects(response.data.result);
+      setPageInfo(response.data.page);
+    }).catch(() => {
+      if (active) setError("프로젝트를 불러오지 못했습니다. 연결을 확인하고 다시 시도해주세요.");
+    }).finally(() => {
+      if (active) setLoading(false);
     });
-
-    console.log(allAutoResult);
-
-    setAutoResult(allAutoResult);
-  };
-
-  // 검색어 변경 시 자동완성 제안 업데이트
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [criteria, retry]);
+  const {
+    query: appliedQuery,
+    startDate: appliedStart,
+    endDate: appliedEnd,
+    filter: appliedFilter
+  } = criteria;
   useEffect(() => {
-    generateSuggestions(searchTerm);
-  }, [searchTerm, projects]);
-
-  // 자동완성 제안 선택 처리
-  const handleSuggestionClick = (suggestion) => {
-    setSearchTerm(suggestion);
-    setShowAutoResult(false);
-    setSelectedAutoIndex(-1);
-  };
-
-  // 검색 실행 함수 수정
-  const handleSearch = async () => {
-    try {
-      const params = {
-        query: searchTerm,
-        startDate: toApiMonth(startDate),
-        endDate: toApiMonth(endDate),
-        filter: getFilterParam(projectFilter),
-        aggrField: "stack",
-        sort: DEFAULT_SORT,
+    const controller = new AbortController();
+    let active = true;
+    setAggregation([]);
+    setAggregationError("");
+    searchAggregationProject({
+      query: appliedQuery,
+      startDate: appliedStart,
+      endDate: appliedEnd,
+      filter: appliedFilter,
+      page: 1,
+      size: 30,
+      aggrField: "stack"
+    }, {
+      signal: controller.signal
+    }).then(response => {
+      if (!active) return;
+      if (response.status !== "success" || !Array.isArray(response.data?.result)) throw new Error("집계 실패");
+      setAggregation(response.data.result);
+    }).catch(() => {
+      if (active) setAggregationError("기술 스택 목록을 불러오지 못했습니다.");
+    });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [appliedQuery, appliedStart, appliedEnd, appliedFilter, retry]);
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    setSuggestions([]);
+    setSelected(-1);
+    setAutoError("");
+    if (!query.trim()) return () => controller.abort();
+    const timer = setTimeout(() => {
+      searchAuto({
+        query: query.toLowerCase(),
         page: 1,
-        size: 6,
-      };
-
-      const project = await searchProjects(params);
-      setProjects(project.data.result);
-      setPageInfo(project.data.page);
-
-      setActiveFilter("all"); // 검색 시 필터 초기화
-
-      loadAggregation();
-    } catch (error) {
-      console.error("프로젝트 검색 실패:", error);
-    }
-  };
-
-  // Enter 키로 검색 실행
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSearch();
-      setShowAutoResult(false);
-      setSelectedAutoIndex(-1);
+        size: 5
+      }, {
+        signal: controller.signal
+      }).then(response => {
+        if (!active) return;
+        if (response.status !== "success") throw new Error("자동완성 실패");
+        setSuggestions(response.data?.result || []);
+      }).catch(() => {
+        if (active) setAutoError("자동완성 연결을 확인할 수 없습니다. 직접 검색할 수 있습니다.");
+      });
+    }, 220);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query]);
+  const applySearch = (value = query) => {
+    if (startDate && endDate && startDate > endDate) {
+      setDateError("종료 월은 시작 월 이후로 선택해주세요.");
       return;
     }
-
-    if (!showAutoResult) return;
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedAutoIndex((prev) =>
-          prev < autoResult.length - 1 ? prev + 1 : prev,
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedAutoIndex((prev) => (prev > 0 ? prev - 1 : -1));
-        break;
-      case "Escape":
-        setShowAutoResult(false);
-        setSelectedAutoIndex(-1);
-        break;
-    }
+    setDateError("");
+    setStack("");
+    setShowSuggestions(false);
+    setCriteria(previous => ({
+      ...previous,
+      query: value.trim(),
+      startDate: toMonth(startDate),
+      endDate: toMonth(endDate),
+      page: 1
+    }));
   };
-
-  // 검색 입력 변경 처리
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    setShowAutoResult(value.length > 0);
-    setSelectedAutoIndex(-1);
+  const selectSuggestion = word => {
+    setQuery(word);
+    setShowSuggestions(false);
+    setSelected(-1);
   };
-
-  const handleProjectFilterChange = async (e) => {
-    const value = e.target.value;
-    setProjectFilter(value);
-
-    try {
-      const params = {
-        query: searchTerm,
-        startDate: toApiMonth(startDate),
-        endDate: toApiMonth(endDate),
-        filter: getFilterParam(value),
-        aggrField: "stack",
-        sort: DEFAULT_SORT,
-        page: 1,
-        size: 6,
-      };
-
-      const project = await searchProjects(params);
-      setProjects(project.data.result);
-      setPageInfo(project.data.page);
-      setActiveFilter("all");
-
-      loadAggregation(value);
-    } catch (error) {
-      console.error("프로젝트 검색 실패:", error);
-    }
-  };
-
-  // 외부 클릭 시 자동완성 닫기
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        searchInputRef.current &&
-        !searchInputRef.current.contains(event.target) &&
-        autoResultRef.current &&
-        !autoResultRef.current.contains(event.target)
-      ) {
-        setShowAutoResult(false);
-        setSelectedAutoIndex(-1);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // 날짜 필터 초기화 함수
-  const clearDateFilter = () => {
+  const reset = () => {
+    setQuery("");
     setStartDate("");
     setEndDate("");
+    setStack("");
+    setDateError("");
+    setShowSuggestions(false);
+    setCriteria(previous => ({
+      ...initialCriteria,
+      filter: previous.filter
+    }));
   };
-
-  // period를 startDate와 endDate로 변환하는 함수
-  const formatPeriod = (startDate, endDate) => {
-    if (!startDate || !endDate) return "";
-
-    const formatDate = (dateString) => {
-      // YYYYMM 형식 처리
-      if (typeof dateString === "string" && dateString.length === 6) {
-        const year = dateString.substring(0, 4);
-        const month = dateString.substring(4, 6);
-        return `${year}.${month}`;
-      }
-
-      // YYYYMMDD 형식 처리
-      if (typeof dateString === "string" && dateString.length === 8) {
-        const year = dateString.substring(0, 4);
-        const month = dateString.substring(4, 6);
-        const day = dateString.substring(6, 8);
-        return `${year}.${month}.${day}`;
-      }
-
-      // ISO 형식 처리 (YYYY-MM-DD)
-      if (typeof dateString === "string" && dateString.includes("-")) {
-        const date = new Date(dateString);
-        return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}`;
-      }
-
-      // Date 객체 처리
-      if (dateString instanceof Date) {
-        return `${dateString.getFullYear()}.${String(dateString.getMonth() + 1).padStart(2, "0")}`;
-      }
-
-      return dateString;
-    };
-
-    const formattedStartDate = formatDate(startDate);
-    const formattedEndDate = formatDate(endDate);
-
-    return `${formattedStartDate} ~ ${formattedEndDate}`;
+  const handleKeys = event => {
+    if (event.key === "Escape") {
+      setShowSuggestions(false);
+      setSelected(-1);
+    }
+    if (event.key === "ArrowDown" && suggestions.length) {
+      event.preventDefault();
+      setShowSuggestions(true);
+      setSelected(index => Math.min(index + 1, suggestions.length - 1));
+    }
+    if (event.key === "ArrowUp" && suggestions.length) {
+      event.preventDefault();
+      setSelected(index => Math.max(index - 1, -1));
+    }
+    if (event.key === "Enter" && showSuggestions && selected >= 0 && suggestions[selected]) {
+      event.preventDefault();
+      const word = suggestions[selected].word;
+      selectSuggestion(word);
+      applySearch(word);
+    }
   };
-
-  const stackSearch = async (stack) => {
-    try {
-      let query = stack;
-
-      if (stack === "all") {
-        query = "";
-      }
-
-      const params = {
-        query: query,
-        startDate: toApiMonth(startDate),
-        endDate: toApiMonth(endDate),
-        filter: getFilterParam(projectFilter),
-        aggrField: "stack",
-        sort: DEFAULT_SORT,
-        page: 1,
-        size: 6,
-      };
-
-      const project = await searchProjects(params);
-      setProjects(project.data.result);
-      setPageInfo(project.data.page);
-    } catch (error) {
-      console.error("프로젝트 검색 실패:", error);
-    }
-    setActiveFilter(stack);
-  };
-
-  // 페이지 변경 핸들러
-  const handlePageChange = (newPage) => {
-    loadProjects(newPage);
-    projectsSectionRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
-
-  // 페이지네이션 컴포넌트
-  const Pagination = () => {
-    const { page, totalPage } = pageInfo;
-
-    if (totalPage <= 1) return null;
-
-    const pages = [];
-    const maxVisiblePages = 5;
-
-    let startPage, endPage;
-
-    // 현재 페이지가 앞쪽에 있을 때 (1~3페이지)
-    if (page <= 3) {
-      startPage = 1;
-      endPage = Math.min(maxVisiblePages, totalPage);
-    }
-    // 현재 페이지가 뒤쪽에 있을 때
-    else if (page >= totalPage - 2) {
-      startPage = Math.max(1, totalPage - maxVisiblePages + 1);
-      endPage = totalPage;
-    }
-    // 현재 페이지가 중간에 있을 때
-    else {
-      startPage = page - 2;
-      endPage = page + 2;
-    }
-
-    // 맨 처음 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 1일 때)
-    pages.push(
-      <button
-        key="first"
-        onClick={() => handlePageChange(1)}
-        className={`page-btn ${page === 1 ? "disabled" : ""}`}
-        disabled={page === 1}
-        title="맨 처음"
-      >
-        처음
-      </button>,
-    );
-
-    // 이전 페이지 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 1일 때)
-    pages.push(
-      <button
-        key="prev"
-        onClick={() => handlePageChange(page - 1)}
-        className={`page-btn ${page === 1 ? "disabled" : ""}`}
-        disabled={page === 1}
-      >
-        이전
-      </button>,
-    );
-
-    // 현재 페이지가 4 이상이고 totalPage가 5 이상일 때 앞에 "..." 추가
-    if (page >= 4 && totalPage >= 5) {
-      pages.push(
-        <span key="dots" className="page-dots">
-          ...
-        </span>,
-      );
-    }
-
-    // 페이지 번호들
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button
-          key={i}
-          onClick={() => handlePageChange(i)}
-          className={`page-btn ${i === page ? "active" : ""}`}
-        >
-          {i}
-        </button>,
-      );
-    }
-
-    // 현재 페이지가 totalPage-3 이하이고 totalPage가 5 이상일 때 뒤에 "..." 추가
-    if (page <= totalPage - 3 && totalPage >= 5) {
-      pages.push(
-        <span key="dots" className="page-dots">
-          ...
-        </span>,
-      );
-    }
-
-    // 다음 페이지 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 마지막 페이지일 때)
-    pages.push(
-      <button
-        key="next"
-        onClick={() => handlePageChange(page + 1)}
-        className={`page-btn ${page === totalPage ? "disabled" : ""}`}
-        disabled={page === totalPage}
-      >
-        다음
-      </button>,
-    );
-
-    // 맨 끝 버튼 (항상 표시, 비활성화 조건: 현재 페이지가 마지막 페이지일 때)
-    pages.push(
-      <button
-        key="last"
-        onClick={() => handlePageChange(totalPage)}
-        className={`page-btn ${page === totalPage ? "disabled" : ""}`}
-        disabled={page === totalPage}
-        title="맨 끝"
-      >
-        끝
-      </button>,
-    );
-
-    return <div className="pagination">{pages}</div>;
-  };
-
-  return (
-    <section className="projects" id="projects" ref={projectsSectionRef}>
-      <div className="container">
-        <div className="section-header">
-          <h2>Projects</h2>
-          <p>제가 참여한 프로젝트를 검색하고 확인해보세요</p>
+  return <section className="projects" id="projects"><div className="container">
+    <SectionHeading number="01" title="Selected work">경험으로 이야기합니다.</SectionHeading>
+    <div className="work-intro"><p>검색 서비스부터 데이터 파이프라인까지.<br />참여한 프로젝트의 역할과 구현 경험을 살펴보세요.</p><span className="editorial-serif">A collection of work.</span></div>
+    <div className="work-toolbar">
+      <fieldset className="project-scope"><legend className="sr-only">프로젝트 범위</legend>{[["Y", "대표 프로젝트"], ["", "전체 프로젝트"]].map(([value, label]) => <label key={label}><input type="radio" name="projectFilter" value={value} checked={criteria.filter === value} onChange={() => setCriteria(previous => ({
+              ...previous,
+              filter: value,
+              page: 1
+            }))} />{label}</label>)}</fieldset>
+      <form className="project-search" onSubmit={event => {
+          event.preventDefault();
+          applySearch();
+        }}>
+        <label className="sr-only" htmlFor="project-query">프로젝트 검색</label>
+        <div className="search-combobox" onBlur={event => {
+            if (!event.currentTarget.contains(event.relatedTarget)) setShowSuggestions(false);
+          }}>
+          <input id="project-query" role="combobox" aria-autocomplete="list" aria-expanded={showSuggestions && suggestions.length > 0} aria-controls="project-suggestions" aria-activedescendant={showSuggestions && selected >= 0 ? "suggestion-" + selected : undefined} placeholder="제목, 역할, 기술로 검색" value={query} onChange={event => {
+              setQuery(event.target.value);
+              setShowSuggestions(true);
+            }} onFocus={() => setShowSuggestions(true)} onKeyDown={handleKeys} autoComplete="off" />
+          {showSuggestions && suggestions.length > 0 && <ul id="project-suggestions" role="listbox" aria-label="자동완성 제안" className="suggestions">{suggestions.map((item, index) => <li role="option" id={"suggestion-" + index} aria-selected={selected === index} key={item.word + index} onMouseDown={event => event.preventDefault()} onClick={() => selectSuggestion(item.word)}>{item.word}</li>)}</ul>}
         </div>
-
-        <div className="project-search">
-          <div className="search-input-container" ref={searchInputRef}>
-            <input
-              type="text"
-              placeholder="프로젝트 제목, 설명, 역할, 기술 스택으로 검색..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              onKeyDown={handleKeyDown}
-              onFocus={() => setShowAutoResult(searchTerm.length > 0)}
-              className="search-input"
-            />
-
-            {/* 검색 버튼 */}
-            <button className="search-btn" onClick={handleSearch} type="button">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-
-            {/* 자동완성 */}
-            {showAutoResult && autoResult.length > 0 && (
-              <div className="search-suggestions" ref={autoResultRef}>
-                {autoResult.map((result, index) => (
-                  <div
-                    key={`${result.word}-${index}`}
-                    className={`suggestion-item ${index === selectedAutoIndex ? "selected" : ""}`}
-                    onClick={() => handleSuggestionClick(result.word)}
-                  >
-                    <span className="suggestion-text">{result.word}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 검색 버튼들을 한 줄에 배치 */}
-          <div className="search-buttons">
-            {/* 날짜 필터 토글 버튼 */}
-            <div className="tooltip-container">
-              <button
-                className="date-filter-toggle"
-                onClick={() => setShowDateFilter(!showDateFilter)}
-              >
-                날짜 검색
-              </button>
-              <div className="tooltip">클릭하면 날짜 검색 창이 나타납니다.</div>
-            </div>
-
-            {/* 기술 스택 필터 토글 버튼 */}
-            <div className="tooltip-container">
-              <button
-                className="stack-filter-toggle"
-                onClick={() => setShowStackFilter(!showStackFilter)}
-              >
-                기술 스택 검색
-              </button>
-              <div className="tooltip">
-                클릭하면 기술 스택 검색 창이 나타납니다.
-              </div>
-            </div>
-
-            <div className="project-filter-radios">
-              <div className="tooltip-container">
-                <label>
-                  <input
-                    type="radio"
-                    name="projectFilter"
-                    value="Y"
-                    checked={projectFilter === "Y"}
-                    onChange={handleProjectFilterChange}
-                  />
-                  대표 프로젝트
-                </label>
-                <div className="tooltip project-filter-tooltip">
-                  이력서 및 경력기술서에 포함되는 프로젝트만 검색합니다.
-                </div>
-              </div>
-              <div className="tooltip-container">
-                <label>
-                  <input
-                    type="radio"
-                    name="projectFilter"
-                    value="all"
-                    checked={projectFilter === "all"}
-                    onChange={handleProjectFilterChange}
-                  />
-                  전체 프로젝트
-                </label>
-                <div className="tooltip project-filter-tooltip">
-                  수행한 모든 프로젝트를 검색합니다.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 날짜 필터 옵션 */}
-        {showDateFilter && (
-          <div className="date-filter-options">
-            <div className="date-input-group">
-              <div className="date-input-item">
-                <label>시작 월</label>
-                <input
-                  type="month"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="date-input"
-                />
-              </div>
-              <div className="date-input-item">
-                <label>종료 월</label>
-                <input
-                  type="month"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="date-input"
-                />
-              </div>
-            </div>
-            <div className="date-filter-actions">
-              <button className="clear-date-btn" onClick={clearDateFilter}>
-                날짜 초기화
-              </button>
-              <button className="apply-date-btn" onClick={handleSearch}>
-                적용
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 기술 스택 필터 옵션 */}
-        {showStackFilter && (
-          <div className="stack-filter-options">
-            <div className="project-filters">
-              <button
-                className={`filter-btn ${
-                  activeFilter === "all" ? "active" : ""
-                }`}
-                onClick={() => stackSearch("all")}
-              >
-                기술 스택 전체
-              </button>
-              {aggregation.map((filter) => (
-                <button
-                  key={filter.key}
-                  className={`filter-btn ${
-                    activeFilter === filter.key ? "active" : ""
-                  }`}
-                  onClick={() => stackSearch(filter.key)}
-                >
-                  {filter.key} ({filter.count})
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="project-result-summary">
-          <span className="project-total-count">
-            검색된 프로젝트 <strong>{pageInfo.totalCount}</strong>개
-          </span>
-        </div>
-
-        {/* 검색 결과가 없을 때 메시지 표시 */}
-        {projects.length === 0 && (
-          <div className="no-results">
-            <div className="no-results-content">
-              <h3>검색 결과가 없습니다</h3>
-              <p>다른 검색어를 입력하거나 필터를 변경해보세요.</p>
-            </div>
-          </div>
-        )}
-
-        <div className="projects-grid">
-          {projects.map((project) => {
-            const { highlight } = project;
-            const bodyItems = getHighlightedPipeItems(
-              highlight,
-              "body",
-              project.body,
-            );
-            const featureItems = getHighlightedPipeItems(
-              highlight,
-              "features",
-              project.features,
-            );
-            const stackItems = getHighlightedPipeItems(
-              highlight,
-              "stack",
-              project.stack,
-            );
-            const roleItems = getHighlightedPipeItems(
-              highlight,
-              "role",
-              project.role,
-            );
-
-            return (
-            <div key={project.id} className="project-card">
-              <div className="project-content">
-                <div className="project-header">
-                  <h3>
-                    {highlight?.title?.[0]
-                      ? renderHighlightHtml(highlight.title[0])
-                      : project.title}
-                  </h3>
-                  {project.important === "Y" && (
-                    <span
-                      className="important-star"
-                      title="중요 프로젝트"
-                      aria-label="중요"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                      </svg>
-                    </span>
-                  )}
-                </div>
-
-                <div className="project-info">
-                  <span className="project-period">
-                    {formatPeriod(project.startDate, project.endDate)}
-                  </span>
-                  {roleItems.map((rolePart, index) => (
-                    <span key={index} className="project-role">
-                      {highlight?.role?.length
-                        ? renderHighlightHtml(rolePart)
-                        : rolePart}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="project-work-content">
-                  <strong>업무내용</strong>
-                  <ul>
-                    {bodyItems.map((content, index) => (
-                      <li key={index}>
-                        {highlight?.body?.length
-                          ? renderHighlightHtml(content)
-                          : content}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {(featureItems.length > 0 || highlight?.features?.length) && (
-                  <div className="project-features">
-                    <h4>주요 성과</h4>
-                    <ul>
-                      {featureItems.map((feature, index) => (
-                        <li key={index}>
-                          {highlight?.features?.length
-                            ? renderHighlightHtml(feature)
-                            : feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {(stackItems.length > 0 || highlight?.stack?.length) && (
-                  <div className="project-technologies">
-                    {stackItems.map((tech, index) => (
-                      <span key={index} className="tech-tag">
-                        {highlight?.stack?.length
-                          ? renderHighlightHtml(tech)
-                          : tech}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            );
-          })}
-        </div>
-        <Pagination pageInfo={pageInfo} onPageChange={handlePageChange} />
-      </div>
-    </section>
-  );
-};
-
-export default Projects;
+        <button type="submit" aria-label="프로젝트 검색 실행">검색 <span aria-hidden="true">↗</span></button>
+      </form>
+    </div>
+    {autoError && <p className="filter-note" role="status">{autoError}</p>}
+    <details className="search-options"><summary>기간 · 기술 스택으로 살펴보기</summary><div className="search-options-body">
+      <form className="date-filter" onSubmit={event => {
+            event.preventDefault();
+            applySearch();
+          }}><label htmlFor="project-start">시작 월<input id="project-start" type="month" value={startDate} onChange={event => setStartDate(event.target.value)} /></label><label htmlFor="project-end">종료 월<input id="project-end" type="month" value={endDate} onChange={event => setEndDate(event.target.value)} /></label><button className="btn" type="submit">기간 적용</button></form>
+      {dateError && <p role="alert" className="status-message error">{dateError}</p>}
+      <div className="stack-filters"><button aria-pressed={!stack} onClick={() => {
+              setStack("");
+              setCriteria(previous => ({
+                ...previous,
+                query: query.trim(),
+                page: 1
+              }));
+            }}>기술 전체</button>{aggregation.map(item => <button key={item.key} aria-pressed={stack === item.key} onClick={() => {
+              setStack(item.key);
+              setCriteria(previous => ({
+                ...previous,
+                query: item.key,
+                page: 1
+              }));
+            }}>{item.key} <span>{item.count}</span></button>)}</div>
+      <p className="filter-note">기술 선택은 해당 기술명을 검색어로 사용합니다.</p>{aggregationError && <p role="status" className="filter-note">{aggregationError}</p>}
+    </div></details>
+    <div className="result-summary"><p aria-live="polite">{loading ? "프로젝트를 불러오는 중" : error ? "프로젝트 연결 확인 필요" : pageInfo.totalCount + "개의 프로젝트"}{criteria.query && " · " + criteria.query}{criteria.startDate && " · " + criteria.startDate + " 이후"}{criteria.endDate && " · " + criteria.endDate + " 이전"}</p><button onClick={reset} className="reset-link">검색 초기화 ↺</button></div>
+    <div aria-busy={loading}>
+      {error ? <div className="empty-state" role="alert"><h3>잠시 연결이 닿지 않았습니다.</h3><p>{error}</p><button className="btn" onClick={() => setRetry(value => value + 1)}>다시 시도</button></div> : loading ? <p className="status-message" role="status">경험을 불러오고 있습니다…</p> : projects.length ? <div className="project-list">{projects.map((project, index) => <ProjectEntry key={project.id} project={project} number={(criteria.page - 1) * criteria.size + index + 1} />)}</div> : <div className="empty-state"><h3>조건에 맞는 프로젝트가 없습니다.</h3><p>다른 검색어를 입력하거나 검색 조건을 초기화해주세요.</p><button className="text-link" onClick={reset}>조건 초기화</button></div>}
+    </div>
+    {!error && <Pagination pageInfo={pageInfo} disabled={loading} onPageChange={page => setCriteria(previous => ({
+        ...previous,
+        page
+      }))} />}
+  </div></section>;
+}

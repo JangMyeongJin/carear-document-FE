@@ -1,222 +1,73 @@
 .experience {
-  padding: 100px 40px;
-  background: white;
+  padding: 96px 0;
+  border-top: 1px solid var(--line);
 }
-
-.experience-section-header {
-  text-align: center;
-  margin-bottom: 4rem;
-}
-
-.experience-section-header h2 {
-  font-size: 2.5rem;
-  color: #2c3e50;
-  margin-bottom: 1rem;
-  font-weight: 700;
-}
-
-.experience-section-header p {
-  font-size: 1.1rem;
-  color: #7f8c8d;
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
 .total-experience {
-  margin-top: 1.5rem;
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, #3498db, #9b59b6);
-  border-radius: 25px;
-  display: inline-block;
-  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 40px;
 }
-
-.total-experience-label {
-  color: white;
-  font-weight: 600;
-  font-size: 1rem;
-  margin-right: 0.5rem;
-}
-
 .total-experience-value {
-  color: white;
-  font-weight: 700;
-  font-size: 1.2rem;
+  margin-left: 8px;
+  color: var(--accent);
 }
-
-/* 새로운 카드 스타일 */
-.experience-cards {
-  max-width: 1200px;
-  margin: 0 auto;
+.experience-card {
+  border-top: 1px solid var(--line);
+  padding: 36px 0;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 32px;
+}
+.card-header {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 12px;
 }
-
-.experience-card {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  border: 1px solid #f0f0f0;
-}
-
-.card-header {
-  background: linear-gradient(135deg, #3498db, #9b59b6);
-  color: white;
-  padding: 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.card-header-left h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.card-header-left h4 {
-  font-size: 1.2rem;
+.position {
+  font-size: 23px;
   font-weight: 500;
-  opacity: 0.9;
+  letter-spacing: -.03em;
 }
-
-.card-header-right .experience-period {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
+.company,.experience-period {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
 }
-
-.card-content {
-  padding: 2rem;
+.card-content h5 {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
 }
-
-.description h5,
-.technologies h5 {
-  font-size: 1.1rem;
-  color: #2c3e50;
-  margin-bottom: 1rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-}
-
-.description h5::before {
-  content: "";
-  margin-right: 0.5rem;
-}
-
-.technologies h5::before {
-  content: "️";
-  margin-right: 0.5rem;
-}
-
 .description-list {
-  list-style: none;
+  margin: 16px 0 24px;
   padding: 0;
-  margin: 0 0 2rem 0;
-}
-
-.description-item {
-  margin-bottom: 0.75rem;
-}
-
-.description-toggle {
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 0.5rem 0 0.5rem 2rem;
-  font-size: 1rem;
-  color: #34495e;
-  cursor: pointer;
-  position: relative;
-  line-height: 1.8;
-  font-family: inherit;
-}
-
-.description-toggle:hover {
-  color: #3498db;
-}
-
-.toggle-icon {
-  position: absolute;
-  left: 0;
-  color: #3498db;
-  font-size: 0.8rem;
-}
-
-.description-sublist {
   list-style: none;
-  padding: 0.5rem 0 0 2.5rem;
-  margin: 0;
 }
-
-.description-sublist li {
-  color: #7f8c8d;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  margin-bottom: 0.4rem;
-  padding-left: 1rem;
-  position: relative;
+.description-item+.description-item {
+  margin-top: 24px;
 }
-
-.description-sublist li::before {
-  content: "•";
-  position: absolute;
-  left: 0;
-  color: #27ae60;
-}
-
-.tech-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-}
-
-.experience-card .tech-tag {
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
+.description-toggle {
+  font-size: 16px;
   font-weight: 500;
-  transition: transform 0.2s ease;
 }
-
-.tech-tag:hover {
-  transform: scale(1.05);
+.toggle-icon {
+  display: none;
 }
-
-@media (max-width: 768px) {
+.description-sublist {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 12px;
+  line-height: 1.9;
+}
+.technologies .tech-tags {
+  margin-top: 12px;
+}
+@media(max-width:767px) {
   .experience {
-    padding: 60px 20px;
+    padding: 64px 0;
   }
-
-  .card-header {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .card-header-right .experience-period {
-    align-self: flex-start;
-  }
-
-  .description-toggle {
-    font-size: 0.95rem;
-    line-height: 1.6;
-  }
-
-  .tech-tags {
-    gap: 0.5rem;
-  }
-
-  .experience-card .tech-tag {
-    font-size: 0.9rem;
-    padding: 0.4rem 0.8rem;
+  .experience-card {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 }

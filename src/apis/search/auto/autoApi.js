@@ -1,11 +1,9 @@
 import api from '../../api';
 
-export const searchAuto = async (params) => {
+export const searchAuto = async (params, options = {}) => {
     try {
-      console.log('params : ', params);
-      const response = await api.post('/search/auto', params);
-      console.log(response.data);
-  
+      const response = await api.post('/search/auto', params, options);
+
       return response.data;
     } catch (error) {
       console.error('자동완성 검색 에러:', error);

@@ -1,11 +1,9 @@
 import api from "../../api";
 
 // 프로젝트 검색 API
-export const searchProjects = async (params) => {
+export const searchProjects = async (params, options = {}) => {
   try {
-    console.log("params : ", params);
-    const response = await api.post("/search/query/project", params);
-    console.log(response.data);
+    const response = await api.post("/search/query/project", params, options);
 
     return response.data;
   } catch (error) {
@@ -15,10 +13,9 @@ export const searchProjects = async (params) => {
 };
 
 // 프로젝트 aggregation 검색 API
-export const searchAggregationProject = async (params) => {
+export const searchAggregationProject = async (params, options = {}) => {
   try {
-    console.log("aggregation params : ", params);
-    const response = await api.post("/search/aggregation/project", params);
+    const response = await api.post("/search/aggregation/project", params, options);
 
     return response.data;
   } catch (error) {
