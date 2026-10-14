@@ -339,3 +339,8 @@
     gap: 8px 16px;
   }
 }
+
+.project-meta > span,
+.project-stack {
+  white-space: pre-wrap;
+}

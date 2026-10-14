@@ -63,7 +63,7 @@ const Experience = () => {
   return <section className="experience" id="experience">
       <div className="container">
         <div className="experience-section-header">
-          <SectionHeading number="03" title="Experience">경험이 쌓이는 과정.</SectionHeading>
+          <SectionHeading number="03" title="Experience">업무 경험.</SectionHeading>
           <div className="total-experience">
             <span className="total-experience-label">총 경력:</span>
             <span className="total-experience-value">

@@ -47,7 +47,14 @@ export default function Projects() {
     }).then(response => {
       if (!active) return;
       if (response.status !== "success" || !Array.isArray(response.data?.result)) throw new Error("검색 실패");
-      setProjects(response.data.result);
+      setProjects(response.data.result.map(project => {
+        const highlightedProject = { ...project };
+        for (const [field, value] of Object.entries(project.highlight || {})) {
+          const text = Array.isArray(value) ? value.filter(item => typeof item === "string" && item.trim()).join(" | ") : value;
+          if (typeof text === "string" && text.trim()) highlightedProject[field] = text;
+        }
+        return highlightedProject;
+      }));
       setPageInfo(response.data.page);
     }).catch(() => {
       if (active) setError("프로젝트를 불러오지 못했습니다. 연결을 확인하고 다시 시도해주세요.");

@@ -80,7 +80,7 @@ const Skills = () => {
   }];
   return <section className="skills" id="skills">
       <div className="container">
-        <SectionHeading number="02" title="Expertise">검색을 중심으로,<br />연결되는 전문성.</SectionHeading>
+        <SectionHeading number="02" title="Expertise">전문 기술.</SectionHeading>
         <div className="expertise-grid">
           <article className="expertise-item"><span>01</span><h3>검색 아키텍처와 품질</h3><p>Elasticsearch, OpenSearch 기반 검색 아키텍처를 설계하고 구축했습니다. 키워드 랭킹과 검색 품질을 다루며 검색 경험을 개선합니다.</p></article>
           <article className="expertise-item"><span>02</span><h3>데이터 수집 · 색인</h3><p>Airflow, Spring Batch 기반 데이터 수집·색인 파이프라인 아키텍처를 설계하고 구축했습니다. 검색 서비스와 데이터를 연결합니다.</p></article>

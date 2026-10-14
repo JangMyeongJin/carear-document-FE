@@ -82,6 +82,27 @@ test("failed query presents retry rather than sample projects", async () => {
   await screen.findByRole("heading", { name: "검색 플랫폼" });
 });
 
+test("project search overwrites populated highlights and preserves empty fields and source", async () => {
+  const source = { ...project, highlight: {
+    title: ["<span class='highLight'>검색</span> 결과"],
+    body: ["첫 업무", "<span class='highLight'>두번째</span> 업무"],
+    description: "강조된 개요",
+    features: [],
+    role: ["", "  "],
+    stack: null
+  } };
+  searchProjects.mockResolvedValue({ ...result, data: { ...result.data, result: [source] } });
+  const { container } = render(<Projects />);
+  expect(await screen.findByRole("heading", { name: "검색 결과" })).toBeInTheDocument();
+  expect(screen.getByText("강조된 개요")).toBeInTheDocument();
+  expect(screen.getByText("첫 업무")).toBeInTheDocument();
+  expect(screen.getByText("운영 효율 개선")).toBeInTheDocument();
+  expect(container.querySelector(".project-meta")).toHaveTextContent(project.role);
+  expect(container.querySelectorAll("mark")).toHaveLength(2);
+  expect(source.title).toBe(project.title);
+  expect(source.body).toBe(project.body);
+});
+
 test("older autocomplete response cannot replace newer suggestions", async () => {
   let resolveOld;
   searchAuto.mockImplementation(({ query }) => query === "old" ? new Promise(resolve => { resolveOld = resolve; }) : Promise.resolve({ status: "success", data: { result: [{ word: "new result" }] } }));
@@ -139,10 +160,10 @@ test("failed save preserves month inputs and API contract", async () => {
   expect(createProject).toHaveBeenCalledWith(expect.objectContaining({ id: "p1", startDate: "202303", endDate: "202312", stack: "Java OpenSearch", body: "색인 구축 | 랭킹 개선" }));
 });
 
-test("project roles and stacks use pipes and overwritten fields retain safe highlights", () => {
+test("project roles and stacks use slashes with two spaces and retain safe highlights", () => {
   const { container } = render(<ProjectEntry number={1} project={{ ...project, role: "설계|개발", stack: "Java <span class='highLight'>OpenSearch</span>", body: "<span class='highLight'>색인</span> 구축|랭킹 개선" }} />);
-  expect(container.querySelector(".project-meta")).toHaveTextContent("설계 | 개발");
-  expect(container.querySelector(".detail-section p")).toHaveTextContent("Java | OpenSearch");
+  expect(container.querySelector(".project-meta > span").textContent).toBe("설계  /  개발");
+  expect(container.querySelector(".project-stack").textContent).toBe("Java  /  OpenSearch");
   expect(container.querySelectorAll("mark")).toHaveLength(2);
   expect(screen.queryByText(/검색 일치/)).not.toBeInTheDocument();
 });

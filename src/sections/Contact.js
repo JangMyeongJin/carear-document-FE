@@ -46,7 +46,7 @@ export default function Contact() {
     }
   };
   return <section className="contact" id="contact"><div className="container">
-    <SectionHeading number="04" title="Contact">다음 이야기를<br />함께 만들어볼까요?</SectionHeading>
+    <SectionHeading number="04" title="Contact">협업 문의</SectionHeading>
     <div className="contact-content"><div className="contact-info"><p className="editorial-serif">Let's connect.</p><p>검색엔진 프로젝트나 기술 협업에 대해 이야기해보세요.<br />검색 관련 프로젝트 문의와 기술 협업 제안을 환영합니다.</p><div className="contact-links"><a href="mailto:jean971013568@gmail.com">jean971013568@gmail.com <span aria-hidden="true">↗</span></a><a href="https://github.com/JangMyeongJin" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a><a href="https://web-developer1.tistory.com/" target="_blank" rel="noopener noreferrer">Blog <span aria-hidden="true">↗</span></a></div></div>
     <form className="contact-form" onSubmit={submit} noValidate aria-busy={submitting}>
       <p className="form-caption">메일 보내기 / 모든 항목은 필수입니다.</p>
